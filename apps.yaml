@@ -12,6 +12,24 @@ apps:
     deploy_path: /srv/apps/Website
     spa: false
 
+  - name: Pathfinder
+    repo: https://github.com/ManuelLerchner/Pathfinder-Website.git
+    build: npm install --legacy-peer-deps && npm run build
+    type: static
+    output: build
+    domain: pathfinder.manuellerchner.de
+    deploy_path: /srv/apps/Pathfinder
+    spa: true
+
+  - name: LambdaCalculus
+    repo: https://github.com/ManuelLerchner/Lambda-Calculus-Website.git
+    build: null                        # pure HTML, no build step
+    type: static
+    output: .
+    domain: lambdacalculus.manuellerchner.de
+    deploy_path: /srv/apps/LambdaCalculus
+    spa: false
+
   - name: Monopoly
     repo: https://github.com/ManuelLerchner/Monopoly-Smart-Bank.git
     build: npm install --legacy-peer-deps && npm run build
@@ -66,15 +84,6 @@ apps:
     deploy_path: /srv/apps/TilePlanner
     spa: true
 
-  - name: IOTVisualizer
-    repo: https://github.com/ManuelLerchner/IOT-Data-Visualizer.git
-    build: npm install --legacy-peer-deps && npm run build
-    type: static
-    output: build
-    domain: iot-data-visualisation.manuellerchner.de
-    deploy_path: /srv/apps/IOTVisualizer
-    spa: true
-
   - name: AlgoExplorer
     repo: https://github.com/ManuelLerchner/algorithm-explorer.git
     build: npm install --legacy-peer-deps && npm run build
@@ -87,6 +96,16 @@ apps:
   # ---------------------------------------------------------------------------
   # Node services — PM2 manages the process, Caddy reverse-proxies
   # ---------------------------------------------------------------------------
+
+  - name: PiController
+    repo: https://github.com/ManuelLerchner/Pi-Controller-Website.git
+    build: npm ci
+    type: service
+    entry: app.js
+    port: 3000
+    domain: pi.manuellerchner.de
+    deploy_path: /srv/apps/PiController
+    pm2_name: PiController
 
   - name: Backend
     repo: https://github.com/ManuelLerchner/Manuel-Lerchner-Backend-Server.git
@@ -129,10 +148,6 @@ apps:
 redirects:
   - from: www.manuellerchner.de
     to: "https://{labels.1}.{labels.0}{uri}"
-  - from: pathfinder.manuellerchner.de
-    to: https://manuellerchner.de/projects/pathfinder
-  - from: lambdacalculus.manuellerchner.de
-    to: https://manuellerchner.de/projects/lambdaCalculus
 
 # ---------------------------------------------------------------------------
 # Passthroughs — external services proxied by Caddy, not managed here

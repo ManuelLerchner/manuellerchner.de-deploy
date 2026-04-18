@@ -8,14 +8,6 @@ www.manuellerchner.de {
 	redir https://{labels.1}.{labels.0}{uri} permanent
 }
 
-pathfinder.manuellerchner.de {
-	redir https://manuellerchner.de/projects/pathfinder permanent
-}
-
-lambdacalculus.manuellerchner.de {
-	redir https://manuellerchner.de/projects/lambdaCalculus permanent
-}
-
 # ── Main website (static) ─────────────────────────────────────────────────────
 
 manuellerchner.de {
@@ -25,6 +17,11 @@ manuellerchner.de {
 }
 
 # ── Node services ─────────────────────────────────────────────────────────────
+
+pi.manuellerchner.de {
+	reverse_proxy localhost:3000
+	encode gzip
+}
 
 api.manuellerchner.de {
 	reverse_proxy localhost:4000
@@ -42,6 +39,19 @@ restaurantapp.manuellerchner.de {
 }
 
 # ── Static apps ───────────────────────────────────────────────────────────────
+
+pathfinder.manuellerchner.de {
+	root * /srv/apps/Pathfinder/build
+	try_files {path} /index.html
+	encode gzip
+	file_server
+}
+
+lambdacalculus.manuellerchner.de {
+	root * /srv/apps/LambdaCalculus
+	encode gzip
+	file_server
+}
 
 monopoly.manuellerchner.de {
 	root * /srv/apps/Monopoly/build
@@ -78,13 +88,6 @@ expensetracker.manuellerchner.de {
 
 tile-planner.manuellerchner.de {
 	root * /srv/apps/TilePlanner/build
-	try_files {path} /index.html
-	encode gzip
-	file_server
-}
-
-iot-data-visualisation.manuellerchner.de {
-	root * /srv/apps/IOTVisualizer/build
 	try_files {path} /index.html
 	encode gzip
 	file_server
