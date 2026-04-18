@@ -21,15 +21,15 @@ members of the `deploy` group, so Caddy can read static build output without sud
 | App | Domain | Build |
 |-----|--------|-------|
 | **Website** | [manuellerchner.de](https://manuellerchner.de) | *(none — pure static)* |
-| **Pathfinder** | [pathfinder.manuellerchner.de](https://pathfinder.manuellerchner.de) | `npm install --legacy-peer-deps && npm run build` |
+| **Pathfinder** | [pathfinder.manuellerchner.de](https://pathfinder.manuellerchner.de) | `npm install && npm run build` |
 | **LambdaCalculus** | [lambdacalculus.manuellerchner.de](https://lambdacalculus.manuellerchner.de) | *(none — pure static)* |
-| **Monopoly** | [monopoly.manuellerchner.de](https://monopoly.manuellerchner.de) | `npm install --legacy-peer-deps && npm run build` |
-| **MinecraftBot** | [minecraft-bot.manuellerchner.de](https://minecraft-bot.manuellerchner.de) | `npm install --legacy-peer-deps && npm run build` |
-| **TaskPlanner** | [taskplanner.manuellerchner.de](https://taskplanner.manuellerchner.de) | `npm install --legacy-peer-deps && npm run build` |
-| **MockTrading** | [mocktrading.manuellerchner.de](https://mocktrading.manuellerchner.de) | `npm install --legacy-peer-deps && npm run build` |
-| **ExpenseTracker** | [expensetracker.manuellerchner.de](https://expensetracker.manuellerchner.de) | `npm install --legacy-peer-deps && npm run build` |
-| **TilePlanner** | [tile-planner.manuellerchner.de](https://tile-planner.manuellerchner.de) | `npm install --legacy-peer-deps && npm run build` |
-| **AlgoExplorer** | [algoexplorer.manuellerchner.de](https://algoexplorer.manuellerchner.de) | `npm install --legacy-peer-deps && npm run build` |
+| **Monopoly** | [monopoly.manuellerchner.de](https://monopoly.manuellerchner.de) | `npm install && npm run build` |
+| **MinecraftBot** | [minecraft-bot.manuellerchner.de](https://minecraft-bot.manuellerchner.de) | `npm install && npm run build` |
+| **TaskPlanner** | [taskplanner.manuellerchner.de](https://taskplanner.manuellerchner.de) | `npm install && npm run build` |
+| **MockTrading** | [mocktrading.manuellerchner.de](https://mocktrading.manuellerchner.de) | `npm install && npm run build` |
+| **ExpenseTracker** | [expensetracker.manuellerchner.de](https://expensetracker.manuellerchner.de) | `npm install && npm run build` |
+| **TilePlanner** | [tile-planner.manuellerchner.de](https://tile-planner.manuellerchner.de) | `npm install && npm run build` |
+| **AlgoExplorer** | [algoexplorer.manuellerchner.de](https://algoexplorer.manuellerchner.de) | `npm install && npm run build` |
 
 ## Backend Services (PM2)
 
@@ -74,4 +74,5 @@ python3 scripts/lint.py
 
 # Regenerate Caddyfile
 python3 scripts/gen_caddyfile.py
-```
+# Regenerate Readme
+python3 scripts/gen_caddyfile.py```

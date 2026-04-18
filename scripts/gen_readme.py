@@ -128,6 +128,9 @@ def render(config: dict) -> str:
         "",
         "# Regenerate Caddyfile",
         "python3 scripts/gen_caddyfile.py",
+        ""
+        "# Regenerate Readme",
+        "python3 scripts/gen_caddyfile.py"
         "```",
         "",
     ]

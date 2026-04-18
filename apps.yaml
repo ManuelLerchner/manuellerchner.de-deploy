@@ -5,7 +5,7 @@ apps:
 
   - name: Website
     repo: https://github.com/ManuelLerchner/manuellerchner.de.git
-    build: null                        # pure static, no build step
+    build: null # pure static, no build step
     type: static
     output: public
     domain: manuellerchner.de
@@ -14,7 +14,7 @@ apps:
 
   - name: Pathfinder
     repo: https://github.com/ManuelLerchner/Pathfinder-Website.git
-    build: npm install --legacy-peer-deps && npm run build
+    build: npm install && npm run build
     type: static
     output: build
     domain: pathfinder.manuellerchner.de
@@ -23,7 +23,7 @@ apps:
 
   - name: LambdaCalculus
     repo: https://github.com/ManuelLerchner/Lambda-Calculus-Website.git
-    build: null                        # pure HTML, no build step
+    build: null # pure HTML, no build step
     type: static
     output: .
     domain: lambdacalculus.manuellerchner.de
@@ -32,7 +32,7 @@ apps:
 
   - name: Monopoly
     repo: https://github.com/ManuelLerchner/Monopoly-Smart-Bank.git
-    build: npm install --legacy-peer-deps && npm run build
+    build: npm install && npm run build
     type: static
     output: build
     domain: monopoly.manuellerchner.de
@@ -41,7 +41,7 @@ apps:
 
   - name: MinecraftBot
     repo: https://github.com/ManuelLerchner/Minecraft-Bot-Website.git
-    build: npm install --legacy-peer-deps && npm run build
+    build: npm install && npm run build
     type: static
     output: dist/Minecraft-Bot
     domain: minecraft-bot.manuellerchner.de
@@ -50,7 +50,7 @@ apps:
 
   - name: TaskPlanner
     repo: https://github.com/ManuelLerchner/Task-Planner.git
-    build: npm install --legacy-peer-deps && npm run build
+    build: npm install && npm run build
     type: static
     output: dist/Task-Planner
     domain: taskplanner.manuellerchner.de
@@ -59,7 +59,7 @@ apps:
 
   - name: MockTrading
     repo: https://github.com/ManuelLerchner/Mock-Trading.git
-    build: npm install --legacy-peer-deps && npm run build
+    build: npm install && npm run build
     type: static
     output: dist/Mock-Trading
     domain: mocktrading.manuellerchner.de
@@ -68,7 +68,7 @@ apps:
 
   - name: ExpenseTracker
     repo: https://github.com/ManuelLerchner/Expense-Tracker.git
-    build: npm install --legacy-peer-deps && npm run build
+    build: npm install && npm run build
     type: static
     output: dist/Expense-Tracker
     domain: expensetracker.manuellerchner.de
@@ -77,7 +77,7 @@ apps:
 
   - name: TilePlanner
     repo: https://github.com/ManuelLerchner/tile-planner.git
-    build: npm install --legacy-peer-deps && npm run build
+    build: npm install && npm run build
     type: static
     output: build
     domain: tile-planner.manuellerchner.de
@@ -86,7 +86,7 @@ apps:
 
   - name: AlgoExplorer
     repo: https://github.com/ManuelLerchner/algorithm-explorer.git
-    build: npm install --legacy-peer-deps && npm run build
+    build: npm install && npm run build
     type: static
     output: build
     domain: algoexplorer.manuellerchner.de
@@ -99,7 +99,7 @@ apps:
 
   - name: PiController
     repo: https://github.com/ManuelLerchner/Pi-Controller-Website.git
-    build: npm install --legacy-peer-deps
+    build: npm install
     type: service
     entry: app.js
     port: 3000
@@ -137,7 +137,7 @@ apps:
     build: npm ci
     type: service
     entry: app.js
-    port: null                         # no web-facing port
+    port: null # no web-facing port
     domain: null
     deploy_path: /srv/apps/DYNDNS
     pm2_name: DYNDNS
