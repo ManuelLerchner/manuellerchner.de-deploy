@@ -139,14 +139,16 @@ apps:
     domain: restaurantapp.manuellerchner.de
     deploy_path: /srv/apps/RestaurantApp
     pm2_name: RestaurantApp
-    # Spring uses embedded H2 (MV store), not SQLite — file at repo root
-    data_file: restaurantDatabase.h2.mv.db
+    # H2 file path must match application.properties: spring.datasource.url=jdbc:h2:./src/main/resources/restaurantDatabase.h2
+    data_file: src/main/resources/restaurantDatabase.h2.mv.db
     data_note: >-
-      H2 database at deploy_path root; git may omit it. Copy from ~/RestaurantApp/ on the Pi
-      or from backup after a fresh clone so data is not reset.
+      H2 stores data under src/main/resources/ (see jdbc URL in application.properties), not the repo root.
+      Copy from ~/RestaurantApp/restaurantDatabase.h2.mv.db if missing or stale after deploy.
     post_deploy_cmd: >-
-      [ -f restaurantDatabase.h2.mv.db ] || cp /home/pi/RestaurantApp/restaurantDatabase.h2.mv.db
-      restaurantDatabase.h2.mv.db
+      mkdir -p src/main/resources &&
+      B=/home/pi/RestaurantApp/restaurantDatabase.h2.mv.db &&
+      T=src/main/resources/restaurantDatabase.h2.mv.db &&
+      [ -f "$B" ] && { [ ! -f "$T" ] || [ "$(stat -c%s "$B")" -gt "$(stat -c%s "$T")" ]; } && cp "$B" "$T"
 
   # ---------------------------------------------------------------------------
   # Background services — PM2 only, no Caddy entry

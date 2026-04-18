@@ -27,7 +27,7 @@ Secrets are not stored in this deploy repo — create or copy those files on the
 | **TilePlanner** | `.env` | — | — | Present in the app repo (build-time); override locally if needed. |
 | **PiController** | `config/config.env` | — | `[ -f config/config.env ] \|\| cp /home/pi/Manuel-Lerchner-Website/config/config.env config/config.env` | Manual on the Pi — not in git. Create from app docs / prior machine. |
 | **Backend** | `dotenv/.env` | — | `[ -f dotenv/.env ] \|\| cp dotenv/.env.example dotenv/.env` | Manual on the Pi — copy from dotenv/.env.example and fill secrets. |
-| **RestaurantApp** | — | `restaurantDatabase.h2.mv.db` | `[ -f restaurantDatabase.h2.mv.db ] \|\| cp /home/pi/RestaurantApp/restaurantDatabase.h2.mv.db restaurantDatabase.h2.mv.db` | H2 database at deploy_path root; git may omit it. Copy from ~/RestaurantApp/ on the Pi or from backup after a fresh clone so data is not reset. |
+| **RestaurantApp** | — | `src/main/resources/restaurantDatabase.h2.mv.db` | `mkdir -p src/main/resources && B=/home/pi/RestaurantApp/restaurantDatabase.h2.mv.db && T=src/main/resources/restaurantDatabase.h2.mv.db && [ -f "$B" ] && { [ ! -f "$T" ] \|\| [ "$(stat -c%s "$B")" -gt "$(stat -c%s "$T")" ]; } && cp "$B" "$T"` | H2 stores data under src/main/resources/ (see jdbc URL in application.properties), not the repo root. Copy from ~/RestaurantApp/restaurantDatabase.h2.mv.db if missing or stale after deploy. |
 | **DYNDNS** | `config/.env` | — | `[ -f config/.env ] \|\| cp /home/pi/DeinServerHost-DynDNS-Handler/config/.env config/.env` | Manual on the Pi — not in git. |
 
 ## Static Sites
