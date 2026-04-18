@@ -1,0 +1,114 @@
+name: Health Check Domains
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday at 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  domain-health-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt --quiet
+
+      - name: Build domain list from apps.yaml
+        run: |
+          python3 - <<'PY'
+          import yaml
+
+          with open("apps.yaml", "r", encoding="utf-8") as f:
+              config = yaml.safe_load(f) or {}
+
+          domains = []
+
+          for app in config.get("apps", []):
+              domain = app.get("domain")
+              if domain:
+                  domains.append(domain.strip())
+
+          for redirect in config.get("redirects", []):
+              domain = redirect.get("from")
+              if domain:
+                  domains.append(domain.strip())
+
+          for passthrough in config.get("passthrough", []):
+              # Internal TLS passthrough entries are not publicly reachable
+              # with a trusted certificate from GitHub-hosted runners.
+              if passthrough.get("tls") == "internal":
+                  continue
+              domain = passthrough.get("domain")
+              if domain:
+                  domains.append(domain.strip())
+
+          unique_domains = sorted(set(d for d in domains if d))
+          with open("domains.txt", "w", encoding="utf-8") as f:
+              f.write("\n".join(unique_domains) + "\n")
+          print(f"Checking {len(unique_domains)} domains")
+          PY
+
+      - name: Check reachability
+        run: |
+          failed=0
+          while IFS= read -r domain; do
+            [ -z "$domain" ] && continue
+            url="https://$domain"
+            echo "Checking $url"
+
+            if ! curl --fail --silent --show-error --location --max-time 20 "$url" > /dev/null; then
+              echo "::error title=Domain unreachable::$url is not reachable"
+              failed=1
+            fi
+          done < domains.txt
+
+          if [ "$failed" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Check TLS certificate expiry
+        run: |
+          python3 - <<'PY'
+          import socket
+          import ssl
+          import sys
+          from datetime import datetime, timezone
+
+          min_days = 14
+          failed = False
+
+          with open("domains.txt", "r", encoding="utf-8") as f:
+              domains = [d.strip() for d in f if d.strip()]
+
+          for domain in domains:
+              context = ssl.create_default_context()
+              try:
+                  with socket.create_connection((domain, 443), timeout=10) as sock:
+                      with context.wrap_socket(sock, server_hostname=domain) as ssock:
+                          cert = ssock.getpeercert()
+                  not_after_raw = cert.get("notAfter")
+                  if not not_after_raw:
+                      print(f"::error title=TLS cert missing::{domain} has no notAfter in certificate")
+                      failed = True
+                      continue
+                  expires_at = datetime.strptime(not_after_raw, "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
+                  days_left = (expires_at - datetime.now(timezone.utc)).days
+                  print(f"{domain}: certificate expires in {days_left} days")
+                  if days_left < min_days:
+                      print(
+                          f"::error title=TLS certificate expiring soon::{domain} expires in {days_left} days (< {min_days})"
+                      )
+                      failed = True
+              except Exception as exc:
+                  print(f"::error title=TLS check failed::{domain}: {exc}")
+                  failed = True
+
+          if failed:
+              sys.exit(1)
+          PY

@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "manuellerchner.de deploy config",
+  "type": "object",
+  "required": [
+    "apps"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "apps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/app"
+      }
+    },
+    "redirects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "from",
+          "to"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "$ref": "#/$defs/domain"
+          },
+          "to": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "default": []
+    },
+    "passthrough": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "domain",
+          "proxy"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "domain": {
+            "$ref": "#/$defs/domain"
+          },
+          "proxy": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tls": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "default": []
+    }
+  },
+  "$defs": {
+    "domain": {
+      "type": "string",
+      "pattern": "^(?!-)[A-Za-z0-9-]+(\\.(?!-)[A-Za-z0-9-]+)+$"
+    },
+    "maybeNullString": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "app": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "name",
+            "repo",
+            "build",
+            "type",
+            "output",
+            "domain",
+            "deploy_path",
+            "spa"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "repo": {
+              "type": "string",
+              "pattern": "^https://github\\.com/.+\\.git$"
+            },
+            "build": {
+              "$ref": "#/$defs/maybeNullString"
+            },
+            "type": {
+              "const": "static"
+            },
+            "output": {
+              "type": "string",
+              "minLength": 1
+            },
+            "domain": {
+              "$ref": "#/$defs/domain"
+            },
+            "deploy_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "spa": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "name",
+            "repo",
+            "build",
+            "type",
+            "deploy_path",
+            "pm2_name",
+            "domain",
+            "port"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "repo": {
+              "type": "string",
+              "pattern": "^https://github\\.com/.+\\.git$"
+            },
+            "build": {
+              "$ref": "#/$defs/maybeNullString"
+            },
+            "type": {
+              "const": "service"
+            },
+            "deploy_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pm2_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "domain": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/domain"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "port": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 65535
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "entry": {
+              "type": "string",
+              "minLength": 1
+            },
+            "start_cmd": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "required": [
+                    "entry"
+                  ]
+                },
+                {
+                  "required": [
+                    "start_cmd"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

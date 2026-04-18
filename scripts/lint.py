@@ -6,11 +6,13 @@ from collections import defaultdict
 from pathlib import Path
 
 try:
+    import jsonschema
     import yaml
 except ImportError:
-    sys.exit("PyYAML not found — run: pip3 install pyyaml")
+    sys.exit("Missing deps — run: pip3 install -r requirements.txt")
 
 APPS_YAML = Path(__file__).parent.parent / "apps.yaml"
+APPS_SCHEMA = Path(__file__).parent.parent / "apps.schema.json"
 
 REQUIRED_STATIC  = {"name", "repo", "type", "output", "domain", "deploy_path"}
 REQUIRED_SERVICE = {"name", "repo", "type", "deploy_path", "pm2_name"}
@@ -84,8 +86,26 @@ def check_no_build_but_output(app: dict) -> None:
         warn(f"[{app['name']}] no build step but output='{app['output']}' — ensure files already exist")
 
 
+def check_schema(config: dict) -> None:
+    try:
+        schema = yaml.safe_load(APPS_SCHEMA.read_text())
+    except Exception as exc:
+        err(f"Unable to read schema file {APPS_SCHEMA}: {exc}")
+        return
+
+    try:
+        jsonschema.validate(config, schema)
+    except jsonschema.ValidationError as exc:
+        loc = ".".join(str(part) for part in exc.path)
+        if loc:
+            err(f"Schema validation failed at '{loc}': {exc.message}")
+        else:
+            err(f"Schema validation failed: {exc.message}")
+
+
 def main() -> None:
     config = yaml.safe_load(APPS_YAML.read_text())
+    check_schema(config)
     apps: list[dict] = config.get("apps", [])
 
     for app in apps:

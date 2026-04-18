@@ -95,8 +95,3 @@ restaurantapp.manuellerchner.de {
 }
 
 # ── Passthroughs (external services, not deployed by this repo) ───────────────
-
-pihole.manuellerchner.de {
-	reverse_proxy localhost:8080
-	tls internal
-}

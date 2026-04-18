@@ -152,11 +152,4 @@ redirects:
 # ---------------------------------------------------------------------------
 # Passthroughs — external services proxied by Caddy, not managed here
 # ---------------------------------------------------------------------------
-passthrough:
-  - name: pihole
-    domain: pihole.manuellerchner.de
-    proxy: localhost:8080
-    tls: internal
-  # - name: n8n
-  #   domain: n8n.manuellerchner.de
-  #   proxy: localhost:5678
+passthrough: []

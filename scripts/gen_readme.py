@@ -128,10 +128,24 @@ def render(config: dict) -> str:
         "",
         "# Regenerate Caddyfile",
         "python3 scripts/gen_caddyfile.py",
-        ""
+        "",
         "# Regenerate Readme",
-        "python3 scripts/gen_caddyfile.py"
+        "python3 scripts/gen_readme.py",
         "```",
+        "",
+        "## Rollback",
+        "",
+        "If a deploy introduces problems, reset an app repo to a known good commit and redeploy that app:",
+        "",
+        "```bash",
+        "cd /srv/apps/<AppName>",
+        "git fetch --all",
+        "git reset --hard <known_good_sha>",
+        "cd /srv/deploy",
+        "python3 deploy.py <AppName>",
+        "```",
+        "",
+        "Use `.deployed-versions.json` in this repo to find previously deployed SHAs.",
         "",
     ]
 
