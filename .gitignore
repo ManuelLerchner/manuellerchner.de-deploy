@@ -2,3 +2,5 @@
 *.log
 .venv/
 .deployed-versions.json
+__pycache__/
+*.py[cod]
