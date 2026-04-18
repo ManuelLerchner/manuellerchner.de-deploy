@@ -8,6 +8,10 @@ on:
 jobs:
   domain-health-check:
     runs-on: ubuntu-latest
+    # Optional: set in repo Settings → Secrets → Actions. If set, curl sends
+    # header X-Domain-Health-Check: <secret> so Cloudflare can allow this probe.
+    env:
+      DOMAIN_HEALTH_CHECK_SECRET: ${{ secrets.DOMAIN_HEALTH_CHECK_SECRET }}
 
     steps:
       - uses: actions/checkout@v6
@@ -54,34 +58,54 @@ jobs:
           print(f"Checking {len(unique_domains)} domains")
           PY
 
-      - name: Check reachability
+      # Requires final HTTP status 2xx after redirects (so 403/502/503 fail).
+      # continue-on-error allows TLS expiry step to run even when HTTP fails.
+      - name: Check HTTPS returns 2xx on /
+        id: http_check
+        continue-on-error: true
         run: |
           failed=0
+          # Browser-like client — some CDNs only block non-browser UAs.
+          UA="Mozilla/5.0 (compatible; manuellerchner-de-deploy/domain-health; +https://github.com/ManuelLerchner/manuellerchner.de-deploy)"
+
           while IFS= read -r domain; do
             [ -z "$domain" ] && continue
-            url="https://$domain"
+            url="https://$domain/"
             echo "Checking $url"
 
-            code="$(curl --silent --show-error --location --max-time 20 \
-              --user-agent "GitHubActions health-check" \
+            extra=( )
+            if [ -n "${DOMAIN_HEALTH_CHECK_SECRET:-}" ]; then
+              extra+=( -H "X-Domain-Health-Check: ${DOMAIN_HEALTH_CHECK_SECRET}" )
+            fi
+
+            code="$(curl --silent --show-error --location --max-time 25 \
+              --compressed \
+              --user-agent "$UA" \
+              -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
+              "${extra[@]}" \
               -o /dev/null -w "%{http_code}" "$url")"
 
             if [ "$code" = "000" ]; then
               echo "::error title=Domain unreachable::$url is not reachable (transport/DNS/TLS error)"
               failed=1
-            elif [ "$code" -ge 500 ] 2>/dev/null; then
-              echo "::error title=Server error::$url returned HTTP $code"
-              failed=1
+            elif [[ "$code" =~ ^2[0-9]{2}$ ]]; then
+              echo "$url → HTTP $code OK"
             else
-              echo "$url responded with HTTP $code"
+              hint=""
+              if [ "$code" = "403" ] || [ "$code" = "401" ]; then
+                hint=" (likely Cloudflare/WAF blocking automated requests; see README Domain health — optional bypass secret)"
+              fi
+              echo "::error title=Unexpected HTTP status::$url returned HTTP $code (expected 2xx after redirects)$hint"
+              failed=1
             fi
           done < domains.txt
 
-          if [ "$failed" -ne 0 ]; then
-            exit 1
-          fi
+          exit "$failed"
 
       - name: Check TLS certificate expiry
+        id: tls_check
+        if: always()
+        continue-on-error: true
         run: |
           python3 - <<'PY'
           import socket
@@ -121,3 +145,17 @@ jobs:
           if failed:
               sys.exit(1)
           PY
+
+      - name: Report overall status
+        if: always()
+        run: |
+          failed=0
+          if [ "${{ steps.http_check.outcome }}" != "success" ]; then
+            echo "::error::HTTPS 2xx check failed. Set repo secret DOMAIN_HEALTH_CHECK_SECRET and allow header X-Domain-Health-Check in Cloudflare if bots are blocked."
+            failed=1
+          fi
+          if [ "${{ steps.tls_check.outcome }}" != "success" ]; then
+            echo "::error::TLS certificate check failed"
+            failed=1
+          fi
+          exit "$failed"

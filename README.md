@@ -1,6 +1,7 @@
 # manuellerchner.de — Deploy
 
 [![Build](https://github.com/ManuelLerchner/manuellerchner.de-deploy/actions/workflows/build.yml/badge.svg)](https://github.com/ManuelLerchner/manuellerchner.de-deploy/actions/workflows/build.yml)
+[![Domain health](https://github.com/ManuelLerchner/manuellerchner.de-deploy/actions/workflows/health-check-domains.yml/badge.svg)](https://github.com/ManuelLerchner/manuellerchner.de-deploy/actions/workflows/health-check-domains.yml)
 
 Declarative homelab deployment for Raspberry Pi.
 Single source of truth: [`apps.yaml`](apps.yaml).
@@ -15,6 +16,18 @@ apps.yaml ──► scripts/gen_caddyfile.py ──► Caddyfile ──► symli
 
 **Permissions:** `/srv/apps` owned by `pi:deploy` (setgid). Both `pi` and `caddy` are
 members of the `deploy` group, so Caddy can read static build output without sudo.
+
+## Domain health (GitHub Actions)
+
+Workflow [`health-check-domains.yml`](.github/workflows/health-check-domains.yml) runs on a schedule.
+For each public hostname from `apps.yaml` it requests `https://<domain>/` and **requires a final HTTP 2xx**
+after redirects. That catches bad gateways, origin errors, and cases where Cloudflare serves a **403**
+block page to automated clients (which the old check incorrectly treated as healthy).
+
+**Cloudflare:** if the job fails with 403/401 for every domain, either relax managed rules for
+well-behaved automated checks, or add a repository secret **`DOMAIN_HEALTH_CHECK_SECRET`** (any strong random string).
+The workflow sends it as the header **`X-Domain-Health-Check`**. In Cloudflare WAF, add a rule to skip
+challenges or allow requests when that header matches the secret (so only your Action can bypass).
 
 ## Env files & persistent data
 
