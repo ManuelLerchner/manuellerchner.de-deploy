@@ -115,7 +115,7 @@ jobs:
       # ── Node toolchain ────────────────────────────────────────────────────────
       - name: Setup Node ${{ matrix.app.node_version }}
         if: matrix.app.toolchain == 'node'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.app.node_version }}
           cache: npm
