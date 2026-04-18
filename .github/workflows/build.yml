@@ -13,23 +13,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: mikefarah/yq@v4.44.1
-
       - name: Generate matrix
         id: matrix
         run: |
-          # Emit one JSON object per app that has a build command
-          json=$(yq -o=json '.apps
-            | map(select(.build != null and .build != "null"))
-            | map({
-                "name":        .name,
-                "repo":        .repo,
-                "build":       .build,
-                "toolchain":   (if .build | test("gradlew") then "java" else "node" end),
-                "node_version": "20",
-                "java_version": "17"
-              })' apps.yaml)
-          echo "json=$json" >> "$GITHUB_OUTPUT"
+          python3 - <<'EOF'
+          import json, os, yaml
+
+          with open("apps.yaml") as f:
+              apps = yaml.safe_load(f)["apps"]
+
+          matrix = [
+              {
+                  "name":         a["name"],
+                  "repo":         a["repo"],
+                  "build":        a["build"],
+                  "toolchain":    "java" if "gradlew" in a["build"] else "node",
+                  "node_version": "20",
+                  "java_version": "17",
+              }
+              for a in apps
+              if a.get("build") and a["build"] != "null"
+          ]
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"json={json.dumps(matrix)}\n")
+          EOF
 
   # ── Build each app in parallel ───────────────────────────────────────────────
   build:
