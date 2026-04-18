@@ -22,10 +22,14 @@ jobs:
           with open("apps.yaml") as f:
               apps = yaml.safe_load(f)["apps"]
 
+          def to_gh_repo(url: str) -> str:
+              # Strip https://github.com/ prefix and .git suffix → owner/repo
+              return url.removeprefix("https://github.com/").removesuffix(".git")
+
           matrix = [
               {
                   "name":         a["name"],
-                  "repo":         a["repo"],
+                  "repo":         to_gh_repo(a["repo"]),
                   "build":        a["build"],
                   "toolchain":    "java" if "gradlew" in a["build"] else "node",
                   "node_version": "20",
@@ -53,7 +57,7 @@ jobs:
       - name: Checkout ${{ matrix.app.name }}
         uses: actions/checkout@v4
         with:
-          repository: ${{ matrix.app.repo != '' && matrix.app.repo || github.repository }}
+          repository: ${{ matrix.app.repo }}
 
       # ── Node toolchain ──────────────────────────────────────────────────────
       - name: Setup Node ${{ matrix.app.node_version }}
