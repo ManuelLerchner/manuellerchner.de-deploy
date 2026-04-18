@@ -2,8 +2,10 @@
 """Deploy apps defined in apps.yaml to the Raspberry Pi."""
 
 import argparse
+import json
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
@@ -14,6 +16,7 @@ except ImportError:
 DEPLOY_DIR = Path(__file__).parent
 APPS_YAML = DEPLOY_DIR / "apps.yaml"
 CADDYFILE = DEPLOY_DIR / "Caddyfile"
+VERSIONS_FILE = DEPLOY_DIR / ".deployed-versions.json"
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -38,6 +41,55 @@ def require(*cmds: str) -> None:
     ).returncode != 0]
     if missing:
         sys.exit(f"Missing tools: {', '.join(missing)} — run scripts/bootstrap.py first")
+
+
+# ── version tracking ──────────────────────────────────────────────────────────
+
+def load_versions() -> dict:
+    if VERSIONS_FILE.exists():
+        return json.loads(VERSIONS_FILE.read_text())
+    return {}
+
+
+def save_versions(versions: dict) -> None:
+    VERSIONS_FILE.write_text(json.dumps(versions, indent=2) + "\n")
+
+
+def record_version(name: str, path: Path) -> str:
+    """Capture HEAD sha of the deployed repo and persist it. Returns the sha."""
+    result = subprocess.run(
+        "git rev-parse HEAD", shell=True, cwd=path, capture_output=True, text=True
+    )
+    sha = result.stdout.strip()
+    if not sha:
+        return ""
+    versions = load_versions()
+    versions[name] = {
+        "sha": sha,
+        "deployed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+    save_versions(versions)
+    log(f"recorded version {sha[:7]}")
+    return sha
+
+
+def get_remote_sha(path: Path) -> str:
+    """Return the sha of origin's default branch (after a fetch)."""
+    result = subprocess.run(
+        "git rev-parse origin/HEAD",
+        shell=True, cwd=path, capture_output=True, text=True
+    )
+    sha = result.stdout.strip()
+    if sha:
+        return sha
+    for branch in ("origin/main", "origin/master"):
+        r = subprocess.run(
+            f"git rev-parse {branch}",
+            shell=True, cwd=path, capture_output=True, text=True
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            return r.stdout.strip()
+    return ""
 
 
 # ── git ───────────────────────────────────────────────────────────────────────
@@ -70,6 +122,8 @@ def deploy_static(app: dict) -> None:
     run(f"chmod -R g+rX {served_path}")
     log(f"✓ serving from {served_path}")
 
+    record_version(name, deploy_path)
+
 
 def deploy_service(app: dict) -> None:
     name = app["name"]
@@ -101,6 +155,8 @@ def deploy_service(app: dict) -> None:
     run("pm2 save --force")
     log("✓ service running")
 
+    record_version(name, deploy_path)
+
 
 DEPLOY_FN = {
     "static": deploy_static,
@@ -108,18 +164,10 @@ DEPLOY_FN = {
 }
 
 
-# ── main ──────────────────────────────────────────────────────────────────────
+# ── commands ──────────────────────────────────────────────────────────────────
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Deploy apps from apps.yaml")
-    parser.add_argument("app", nargs="?", default="all",
-                        help="App name to deploy, or 'all' (default)")
-    args = parser.parse_args()
-
+def cmd_deploy(args: argparse.Namespace, apps: list[dict]) -> None:
     require("git", "pm2")
-
-    config = yaml.safe_load(APPS_YAML.read_text())
-    apps: list[dict] = config["apps"]
 
     target = args.app
     if target != "all" and not any(a["name"] == target for a in apps):
@@ -155,6 +203,113 @@ def main() -> None:
     if failed:
         print(f"Failed: {', '.join(failed)}")
         sys.exit(1)
+
+
+def cmd_update(apps: list[dict]) -> None:
+    require("git", "pm2")
+
+    versions = load_versions()
+    up_to_date: list[str] = []
+    updated: list[str] = []
+    failed: list[str] = []
+    any_static_updated = False
+
+    for app in apps:
+        name = app["name"]
+        deploy_path = Path(app["deploy_path"])
+        kind = app["type"]
+
+        header(name, kind)
+
+        if not (deploy_path / ".git").exists():
+            log("not cloned yet — deploying fresh")
+            try:
+                DEPLOY_FN[kind](app)
+                updated.append(name)
+                if kind == "static":
+                    any_static_updated = True
+            except Exception as exc:
+                print(f"  [FAILED] {exc}", file=sys.stderr)
+                failed.append(name)
+            continue
+
+        log("fetching remote…")
+        fetch_result = subprocess.run(
+            "git fetch --quiet", shell=True, cwd=deploy_path, capture_output=True
+        )
+        if fetch_result.returncode != 0:
+            print("  [FAILED] git fetch failed", file=sys.stderr)
+            failed.append(name)
+            continue
+
+        remote_sha = get_remote_sha(deploy_path)
+        deployed_sha = versions.get(name, {}).get("sha", "")
+
+        if not deployed_sha:
+            log("not in .deployed-versions.json — deploying")
+        elif remote_sha == deployed_sha:
+            log(f"up-to-date ({deployed_sha[:7]})")
+            up_to_date.append(name)
+            continue
+        else:
+            log(f"update available {deployed_sha[:7]} → {remote_sha[:7]}")
+
+        try:
+            DEPLOY_FN[kind](app)
+            updated.append(name)
+            if kind == "static":
+                any_static_updated = True
+        except Exception as exc:
+            print(f"  [FAILED] {exc}", file=sys.stderr)
+            failed.append(name)
+
+    if any_static_updated:
+        print("\nReloading Caddy...")
+        result = subprocess.run(
+            f"sudo caddy reload --config {CADDYFILE}",
+            shell=True
+        )
+        if result.returncode == 0:
+            print("✓ Caddy reloaded")
+        else:
+            print("⚠ Caddy reload failed (is Caddy running?)")
+
+    print("\n── update summary ──────────────────────────────")
+    if up_to_date:
+        print(f"  up-to-date ({len(up_to_date)}): {', '.join(up_to_date)}")
+    if updated:
+        print(f"  updated    ({len(updated)}): {', '.join(updated)}")
+    if failed:
+        print(f"  failed     ({len(failed)}): {', '.join(failed)}")
+    if not up_to_date and not updated and not failed:
+        print("  nothing to do")
+
+    if failed:
+        sys.exit(1)
+
+
+# ── main ──────────────────────────────────────────────────────────────────────
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Deploy apps from apps.yaml")
+    sub = parser.add_subparsers(dest="command")
+
+    sub.add_parser("update", help="Fetch remotes and redeploy apps with new commits")
+
+    # positional for bare: deploy.py [app|all]
+    parser.add_argument("app", nargs="?", default="all",
+                        help="App name to deploy, or 'all' (default). "
+                             "Use 'update' subcommand to check for remote changes.")
+
+    args = parser.parse_args()
+
+    config = yaml.safe_load(APPS_YAML.read_text())
+    apps: list[dict] = config["apps"]
+
+    if args.command == "update":
+        cmd_update(apps)
+    else:
+        cmd_deploy(args, apps)
 
 
 if __name__ == "__main__":
