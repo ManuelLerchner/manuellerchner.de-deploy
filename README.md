@@ -31,7 +31,7 @@ Cloudflare must allow traffic based on that header alone (WAF *Skip* rule).
 In **Security → WAF → Custom rules** (same zone as `manuellerchner.de`), create a rule **above** other custom rules:
 
 - **When:** `(http.request.headers["x-domain-health-check"][0] eq "<paste exact secret>")`
-  (header names are lowercase in expressions; value must match the Actions secret **exactly** — no trailing newline.)
+  (header names are lowercase in expressions; value must match the trimmed Actions secret — re-save the GitHub secret as a **single line** if you still get 403.)
 - **Then:** *Skip* — enable **Super Bot Fight Mode**, **Browser Integrity Check**, **All managed rules**,
   and **Rate limiting** at minimum; add more if you still see 403.
 

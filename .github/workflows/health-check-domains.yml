@@ -73,7 +73,11 @@ jobs:
         continue-on-error: true
         run: |
           failed=0
-          # Plain curl; value must match Cloudflare `eq "…"` exactly (quoted to preserve the secret).
+          # Strip leading/trailing whitespace (GitHub secret paste often adds a trailing newline → WAF eq mismatch).
+          DH="$(printf '%s' "$DOMAIN_HEALTH_CHECK_SECRET" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+          if [ "${#DOMAIN_HEALTH_CHECK_SECRET}" -ne "${#DH}" ]; then
+            echo "::warning::Secret had extra whitespace — trimmed for curl. Use the same trimmed hex in Cloudflare \`eq \"…\"\` or re-save the repo secret as one line."
+          fi
 
           while IFS= read -r domain; do
             [ -z "$domain" ] && continue
@@ -81,7 +85,7 @@ jobs:
             echo "Checking $url"
 
             code="$(curl --silent --show-error --location --max-time 25 \
-              -H "x-domain-health-check: ${DOMAIN_HEALTH_CHECK_SECRET}" \
+              -H "x-domain-health-check: ${DH}" \
               -o /dev/null -w "%{http_code}" "$url")"
 
             if [ "$code" = "000" ]; then
@@ -92,7 +96,7 @@ jobs:
             else
               hint=""
               if [ "$code" = "403" ] || [ "$code" = "401" ]; then
-                hint=" (likely Cloudflare/WAF blocking automated requests; see README Domain health — optional bypass secret)"
+                hint=" (Cloudflare: Skip rule must match header value; GitHub secret must equal WAF \`eq \"…\"\` — see README Domain health)"
               fi
               echo "::error title=Unexpected HTTP status::$url returned HTTP $code (expected 2xx after redirects)$hint"
               failed=1
