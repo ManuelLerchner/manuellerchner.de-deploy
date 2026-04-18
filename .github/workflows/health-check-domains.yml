@@ -64,7 +64,7 @@ jobs:
 
             code="$(curl --silent --show-error --location --max-time 20 \
               --user-agent "GitHubActions health-check" \
-              -o /dev/null -w "%{http_code}" "$url" || echo "000")"
+              -o /dev/null -w "%{http_code}" "$url")"
 
             if [ "$code" = "000" ]; then
               echo "::error title=Domain unreachable::$url is not reachable (transport/DNS/TLS error)"
