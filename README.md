@@ -24,10 +24,20 @@ For each public hostname from `apps.yaml` it requests `https://<domain>/` and **
 after redirects. That catches bad gateways, origin errors, and cases where Cloudflare serves a **403**
 block page to automated clients (which the old check incorrectly treated as healthy).
 
-**Cloudflare:** if the job fails with 403/401 for every domain, either relax managed rules for
-well-behaved automated checks, or add a repository secret **`DOMAIN_HEALTH_CHECK_SECRET`** (any strong random string).
-The workflow sends it as the header **`X-Domain-Health-Check`**. In Cloudflare WAF, add a rule to skip
-challenges or allow requests when that header matches the secret (so only your Action can bypass).
+**Cloudflare bypass:** add repo secret **`DOMAIN_HEALTH_CHECK_SECRET`** (same value you will reference in Cloudflare),
+`openssl rand -hex 32`. The workflow sends **`X-Domain-Health-Check: <secret>`** on each request — no browser-like headers;
+Cloudflare must allow traffic based on that header alone (WAF *Skip* rule).
+
+In **Security → WAF → Custom rules** (same zone as `manuellerchner.de`), create a rule **above** other custom rules:
+
+- **When:** `(http.request.headers["x-domain-health-check"][0] eq "<paste exact secret>")`
+  (header names are lowercase in expressions; value must match the Actions secret **exactly** — no trailing newline.)
+- **Then:** *Skip* — enable **Super Bot Fight Mode**, **Browser Integrity Check**, **All managed rules**,
+  and **Rate limiting** at minimum; add more if you still see 403.
+
+Confirm with: `curl -sSI -H 'X-Domain-Health-Check: YOUR_SECRET' 'https://example.manuellerchner.de/'`
+from your laptop — you should see **HTTP/2 200** (or 3xx then 200 with `-L`). If curl works locally but Actions does not,
+the secret in GitHub vs Cloudflare differs.
 
 ## Env files & persistent data
 

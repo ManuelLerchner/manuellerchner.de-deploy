@@ -23,6 +23,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt --quiet
 
+      - name: Check secret is present (Cloudflare bypass)
+        run: |
+          if [ -z "${DOMAIN_HEALTH_CHECK_SECRET:-}" ]; then
+            echo "::error::DOMAIN_HEALTH_CHECK_SECRET is unset. GitHub Actions IPs are often blocked by Cloudflare; add the secret under Repository → Settings → Secrets and variables → Actions (same value as in your WAF rule expression)."
+            exit 1
+          fi
+          echo "DOMAIN_HEALTH_CHECK_SECRET is set (length ${#DOMAIN_HEALTH_CHECK_SECRET} characters)"
+
       - name: Build domain list from apps.yaml
         run: |
           python3 - <<'PY'
@@ -65,8 +73,7 @@ jobs:
         continue-on-error: true
         run: |
           failed=0
-          # Browser-like client — some CDNs only block non-browser UAs.
-          UA="Mozilla/5.0 (compatible; manuellerchner-de-deploy/domain-health; +https://github.com/ManuelLerchner/manuellerchner.de-deploy)"
+          # Plain curl; auth against Cloudflare is only the shared secret header (see README).
 
           while IFS= read -r domain; do
             [ -z "$domain" ] && continue
@@ -79,9 +86,6 @@ jobs:
             fi
 
             code="$(curl --silent --show-error --location --max-time 25 \
-              --compressed \
-              --user-agent "$UA" \
-              -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" \
               "${extra[@]}" \
               -o /dev/null -w "%{http_code}" "$url")"
 
