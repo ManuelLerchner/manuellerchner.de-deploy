@@ -62,9 +62,18 @@ jobs:
             url="https://$domain"
             echo "Checking $url"
 
-            if ! curl --fail --silent --show-error --location --max-time 20 "$url" > /dev/null; then
-              echo "::error title=Domain unreachable::$url is not reachable"
+            code="$(curl --silent --show-error --location --max-time 20 \
+              --user-agent "GitHubActions health-check" \
+              -o /dev/null -w "%{http_code}" "$url")"
+
+            if [ "$code" = "000" ]; then
+              echo "::error title=Domain unreachable::$url is not reachable (transport/DNS/TLS error)"
               failed=1
+            elif [ "$code" -ge 500 ] 2>/dev/null; then
+              echo "::error title=Server error::$url returned HTTP $code"
+              failed=1
+            else
+              echo "$url responded with HTTP $code"
             fi
           done < domains.txt
 
