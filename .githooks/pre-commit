@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Regenerate Caddyfile + README from apps.yaml and validate before every commit.
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+PYTHON="python3"
+# Prefer venv if it exists (local dev)
+if [[ -f ".venv/bin/python" ]]; then
+  PYTHON=".venv/bin/python"
+fi
+
+echo "pre-commit: linting apps.yaml..."
+"$PYTHON" scripts/lint.py
+
+echo "pre-commit: regenerating Caddyfile..."
+"$PYTHON" scripts/gen_caddyfile.py
+
+echo "pre-commit: regenerating README..."
+"$PYTHON" scripts/gen_readme.py
+
+# Stage the generated files so they're included in this commit
+git add Caddyfile README.md

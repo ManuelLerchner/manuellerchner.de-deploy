@@ -120,6 +120,14 @@ def make_executable() -> None:
     deploy_script.chmod(deploy_script.stat().st_mode | 0o111)
 
 
+def configure_git_hooks() -> None:
+    log("Configuring git hooks path → .githooks/")
+    run(f"git -C {DEPLOY_DIR} config core.hooksPath .githooks")
+    hook = DEPLOY_DIR / ".githooks" / "pre-commit"
+    hook.chmod(hook.stat().st_mode | 0o111)
+    log("pre-commit hook active")
+
+
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -131,6 +139,7 @@ def main() -> None:
     symlink_caddyfile()
     setup_caddy_sudoers()
     make_executable()
+    configure_git_hooks()
 
     log("")
     log("Bootstrap complete. Next steps:")
