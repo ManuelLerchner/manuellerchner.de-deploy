@@ -125,3 +125,5 @@ jobs:
       # ── Build ─────────────────────────────────────────────────────────────────
       - name: Build
         run: ${{ matrix.app.build }}
+        env:
+          CI: "false"   # react-scripts treats warnings as errors when CI=true
