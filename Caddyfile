@@ -1,0 +1,109 @@
+# Managed by: github.com/ManuelLerchner/manuellerchner.de-deploy
+# Location on Pi: /srv/deploy/Caddyfile
+# Symlinked from: /etc/caddy/Caddyfile
+
+# ── Redirects ─────────────────────────────────────────────────────────────────
+
+www.manuellerchner.de {
+	redir https://{labels.1}.{labels.0}{uri} permanent
+}
+
+pathfinder.manuellerchner.de {
+	redir https://manuellerchner.de/projects/pathfinder permanent
+}
+
+lambdacalculus.manuellerchner.de {
+	redir https://manuellerchner.de/projects/lambdaCalculus permanent
+}
+
+# ── Main website (static) ─────────────────────────────────────────────────────
+
+manuellerchner.de {
+	root * /srv/apps/Website/public
+	encode gzip
+	file_server
+}
+
+# ── Node services ─────────────────────────────────────────────────────────────
+
+api.manuellerchner.de {
+	reverse_proxy localhost:4000
+	encode gzip
+}
+
+moneyflow.manuellerchner.de {
+	reverse_proxy localhost:3020
+	encode gzip
+}
+
+restaurantapp.manuellerchner.de {
+	reverse_proxy localhost:3019
+	encode gzip
+}
+
+# ── Static apps ───────────────────────────────────────────────────────────────
+
+monopoly.manuellerchner.de {
+	root * /srv/apps/Monopoly/build
+	try_files {path} /index.html
+	encode gzip
+	file_server
+}
+
+minecraft-bot.manuellerchner.de {
+	root * /srv/apps/MinecraftBot/dist/Minecraft-Bot
+	encode gzip
+	file_server
+}
+
+taskplanner.manuellerchner.de {
+	root * /srv/apps/TaskPlanner/dist/Task-Planner
+	encode gzip
+	file_server
+}
+
+mocktrading.manuellerchner.de {
+	root * /srv/apps/MockTrading/dist/Mock-Trading
+	try_files {path} /index.html
+	encode gzip
+	file_server
+}
+
+expensetracker.manuellerchner.de {
+	root * /srv/apps/ExpenseTracker/dist/Expense-Tracker
+	try_files {path} /index.html
+	encode gzip
+	file_server
+}
+
+tile-planner.manuellerchner.de {
+	root * /srv/apps/TilePlanner/build
+	try_files {path} /index.html
+	encode gzip
+	file_server
+}
+
+iot-data-visualisation.manuellerchner.de {
+	root * /srv/apps/IOTVisualizer/build
+	try_files {path} /index.html
+	encode gzip
+	file_server
+}
+
+algoexplorer.manuellerchner.de {
+	root * /srv/apps/AlgoExplorer/build
+	try_files {path} /index.html
+	encode gzip
+	file_server
+}
+
+# ── Passthroughs (external services, not deployed by this repo) ───────────────
+
+pihole.manuellerchner.de {
+	reverse_proxy localhost:8080
+	tls internal
+}
+
+# n8n.manuellerchner.de {
+# 	reverse_proxy localhost:5678
+# }

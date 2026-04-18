@@ -1,0 +1,156 @@
+apps:
+  # ---------------------------------------------------------------------------
+  # Static sites — Caddy serves output dir directly, no Node process needed
+  # ---------------------------------------------------------------------------
+
+  - name: Website
+    repo: https://github.com/ManuelLerchner/manuellerchner.de.git
+    build: null                        # pure static, no build step
+    type: static
+    output: public
+    domain: manuellerchner.de
+    deploy_path: /srv/apps/Website
+    spa: false
+
+  - name: Monopoly
+    repo: https://github.com/ManuelLerchner/Monopoly-Smart-Bank.git
+    build: npm ci && npm run build
+    type: static
+    output: build
+    domain: monopoly.manuellerchner.de
+    deploy_path: /srv/apps/Monopoly
+    spa: true
+
+  - name: MinecraftBot
+    repo: https://github.com/ManuelLerchner/Minecraft-Bot-Website.git
+    build: npm ci && npm run build
+    type: static
+    output: dist/Minecraft-Bot
+    domain: minecraft-bot.manuellerchner.de
+    deploy_path: /srv/apps/MinecraftBot
+    spa: false
+
+  - name: TaskPlanner
+    repo: https://github.com/ManuelLerchner/Task-Planner.git
+    build: npm ci && npm run build
+    type: static
+    output: dist/Task-Planner
+    domain: taskplanner.manuellerchner.de
+    deploy_path: /srv/apps/TaskPlanner
+    spa: false
+
+  - name: MockTrading
+    repo: https://github.com/ManuelLerchner/Mock-Trading.git
+    build: npm ci && npm run build
+    type: static
+    output: dist/Mock-Trading
+    domain: mocktrading.manuellerchner.de
+    deploy_path: /srv/apps/MockTrading
+    spa: true
+
+  - name: ExpenseTracker
+    repo: https://github.com/ManuelLerchner/Expense-Tracker.git
+    build: npm ci && npm run build
+    type: static
+    output: dist/Expense-Tracker
+    domain: expensetracker.manuellerchner.de
+    deploy_path: /srv/apps/ExpenseTracker
+    spa: true
+
+  - name: TilePlanner
+    repo: https://github.com/ManuelLerchner/tile-planner.git
+    build: npm ci && npm run build
+    type: static
+    output: build
+    domain: tile-planner.manuellerchner.de
+    deploy_path: /srv/apps/TilePlanner
+    spa: true
+
+  - name: IOTVisualizer
+    repo: https://github.com/ManuelLerchner/IOT-Data-Visualizer.git
+    build: npm ci && npm run build
+    type: static
+    output: build
+    domain: iot-data-visualisation.manuellerchner.de
+    deploy_path: /srv/apps/IOTVisualizer
+    spa: true
+
+  - name: AlgoExplorer
+    repo: https://github.com/ManuelLerchner/algorithm-explorer.git
+    build: npm ci && npm run build
+    type: static
+    output: build
+    domain: algoexplorer.manuellerchner.de
+    deploy_path: /srv/apps/AlgoExplorer
+    spa: true
+
+  # ---------------------------------------------------------------------------
+  # Node services — PM2 manages the process, Caddy reverse-proxies
+  # ---------------------------------------------------------------------------
+
+  - name: Backend
+    repo: https://github.com/ManuelLerchner/Manuel-Lerchner-Backend-Server.git
+    build: npm ci
+    type: service
+    entry: app.js
+    port: 4000
+    domain: api.manuellerchner.de
+    deploy_path: /srv/apps/Backend
+    pm2_name: Backend
+
+  - name: MoneyFlow
+    repo: https://github.com/ManuelLerchner/MoneyFlow.git  # private — ensure Pi has access
+    build: npm ci
+    type: service
+    entry: app.js                      # TODO: verify entry point
+    port: 3020
+    domain: moneyflow.manuellerchner.de
+    deploy_path: /srv/apps/MoneyFlow
+    pm2_name: MoneyFlow
+
+  - name: RestaurantApp
+    repo: https://github.com/ManuelLerchner/RestaurantApp.git  # TODO: verify repo URL
+    build: npm ci
+    type: service
+    entry: app.js                      # TODO: verify entry point
+    port: 3019
+    domain: restaurantapp.manuellerchner.de
+    deploy_path: /srv/apps/RestaurantApp
+    pm2_name: RestaurantApp
+
+  # ---------------------------------------------------------------------------
+  # Background services — PM2 only, no Caddy entry
+  # ---------------------------------------------------------------------------
+
+  - name: DYNDNS
+    repo: https://github.com/ManuelLerchner/DeinServerHost-DynDNS-Handler.git
+    build: npm ci
+    type: service
+    entry: app.js
+    port: null                         # no web-facing port
+    domain: null
+    deploy_path: /srv/apps/DYNDNS
+    pm2_name: DYNDNS
+
+# ---------------------------------------------------------------------------
+# Redirects — Caddy only, no app managed here
+# ---------------------------------------------------------------------------
+redirects:
+  - from: www.manuellerchner.de
+    to: "https://{labels.1}.{labels.0}{uri}"
+  - from: pathfinder.manuellerchner.de
+    to: https://manuellerchner.de/projects/pathfinder
+  - from: lambdacalculus.manuellerchner.de
+    to: https://manuellerchner.de/projects/lambdaCalculus
+
+# ---------------------------------------------------------------------------
+# Passthroughs — external services proxied by Caddy, not managed here
+# ---------------------------------------------------------------------------
+passthrough:
+  - name: pihole
+    domain: pihole.manuellerchner.de
+    proxy: localhost:8080
+    tls: internal
+  # - name: n8n
+  #   domain: n8n.manuellerchner.de
+  #   proxy: localhost:5678
