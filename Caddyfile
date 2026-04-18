@@ -1,6 +1,7 @@
+# AUTO-GENERATED — do not edit by hand.
+# Source: apps.yaml  |  Generator: scripts/gen_caddyfile.py
 # Managed by: github.com/ManuelLerchner/manuellerchner.de-deploy
-# Location on Pi: /srv/deploy/Caddyfile
-# Symlinked from: /etc/caddy/Caddyfile
+# Location on Pi: /srv/deploy/Caddyfile  |  Symlinked from: /etc/caddy/Caddyfile
 
 # ── Redirects ─────────────────────────────────────────────────────────────────
 
@@ -8,37 +9,13 @@ www.manuellerchner.de {
 	redir https://{labels.1}.{labels.0}{uri} permanent
 }
 
-# ── Main website (static) ─────────────────────────────────────────────────────
+# ── Static apps ───────────────────────────────────────────────────────────────
 
 manuellerchner.de {
 	root * /srv/apps/Website/public
 	encode gzip
 	file_server
 }
-
-# ── Node services ─────────────────────────────────────────────────────────────
-
-pi.manuellerchner.de {
-	reverse_proxy localhost:3000
-	encode gzip
-}
-
-api.manuellerchner.de {
-	reverse_proxy localhost:4000
-	encode gzip
-}
-
-moneyflow.manuellerchner.de {
-	reverse_proxy localhost:3020
-	encode gzip
-}
-
-restaurantapp.manuellerchner.de {
-	reverse_proxy localhost:3019
-	encode gzip
-}
-
-# ── Static apps ───────────────────────────────────────────────────────────────
 
 pathfinder.manuellerchner.de {
 	root * /srv/apps/Pathfinder/build
@@ -100,13 +77,26 @@ algoexplorer.manuellerchner.de {
 	file_server
 }
 
+# ── Node / backend services ───────────────────────────────────────────────────
+
+pi.manuellerchner.de {
+	reverse_proxy localhost:3000
+	encode gzip
+}
+
+api.manuellerchner.de {
+	reverse_proxy localhost:4000
+	encode gzip
+}
+
+restaurantapp.manuellerchner.de {
+	reverse_proxy localhost:3019
+	encode gzip
+}
+
 # ── Passthroughs (external services, not deployed by this repo) ───────────────
 
 pihole.manuellerchner.de {
 	reverse_proxy localhost:8080
 	tls internal
 }
-
-# n8n.manuellerchner.de {
-# 	reverse_proxy localhost:5678
-# }

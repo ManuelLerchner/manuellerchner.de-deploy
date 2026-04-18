@@ -99,7 +99,7 @@ apps:
 
   - name: PiController
     repo: https://github.com/ManuelLerchner/Pi-Controller-Website.git
-    build: npm ci
+    build: npm install --legacy-peer-deps
     type: service
     entry: app.js
     port: 3000
