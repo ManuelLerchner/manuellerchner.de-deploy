@@ -124,6 +124,26 @@
             },
             "spa": {
               "type": "boolean"
+            },
+            "env_file": {
+              "type": "string",
+              "minLength": 1
+            },
+            "env_note": {
+              "type": "string",
+              "minLength": 1
+            },
+            "post_deploy_cmd": {
+              "type": "string",
+              "minLength": 1
+            },
+            "data_file": {
+              "type": "string",
+              "minLength": 1
+            },
+            "data_note": {
+              "type": "string",
+              "minLength": 1
             }
           }
         },
@@ -190,6 +210,26 @@
               "minLength": 1
             },
             "start_cmd": {
+              "type": "string",
+              "minLength": 1
+            },
+            "env_file": {
+              "type": "string",
+              "minLength": 1
+            },
+            "env_note": {
+              "type": "string",
+              "minLength": 1
+            },
+            "post_deploy_cmd": {
+              "type": "string",
+              "minLength": 1
+            },
+            "data_file": {
+              "type": "string",
+              "minLength": 1
+            },
+            "data_note": {
               "type": "string",
               "minLength": 1
             }

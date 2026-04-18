@@ -16,6 +16,20 @@ apps.yaml ──► scripts/gen_caddyfile.py ──► Caddyfile ──► symli
 **Permissions:** `/srv/apps` owned by `pi:deploy` (setgid). Both `pi` and `caddy` are
 members of the `deploy` group, so Caddy can read static build output without sudo.
 
+## Env files & persistent data
+
+Paths below are **relative to each app's** `deploy_path` on the Pi (see [`apps.yaml`](apps.yaml)).
+Secrets are not stored in this deploy repo — create or copy those files on the Pi.
+
+| App | `env_file` | `data_file` | `post_deploy_cmd` | Notes |
+|-----|------------|-------------|-------------------|-------|
+| **Monopoly** | `.env` | — | — | Present in the app repo (build-time); override locally if needed. |
+| **TilePlanner** | `.env` | — | — | Present in the app repo (build-time); override locally if needed. |
+| **PiController** | `config/config.env` | — | `[ -f config/config.env ] \|\| cp /home/pi/Manuel-Lerchner-Website/config/config.env config/config.env` | Manual on the Pi — not in git. Create from app docs / prior machine. |
+| **Backend** | `dotenv/.env` | — | `[ -f dotenv/.env ] \|\| cp dotenv/.env.example dotenv/.env` | Manual on the Pi — copy from dotenv/.env.example and fill secrets. |
+| **RestaurantApp** | — | `restaurantDatabase.h2.mv.db` | `[ -f restaurantDatabase.h2.mv.db ] \|\| cp /home/pi/RestaurantApp/restaurantDatabase.h2.mv.db restaurantDatabase.h2.mv.db` | H2 database at deploy_path root; git may omit it. Copy from ~/RestaurantApp/ on the Pi or from backup after a fresh clone so data is not reset. |
+| **DYNDNS** | `config/.env` | — | `[ -f config/.env ] \|\| cp /home/pi/DeinServerHost-DynDNS-Handler/config/.env config/.env` | Manual on the Pi — not in git. |
+
 ## Static Sites
 
 | App | Domain | Build |

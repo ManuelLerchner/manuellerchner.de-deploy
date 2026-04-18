@@ -38,6 +38,8 @@ apps:
     domain: monopoly.manuellerchner.de
     deploy_path: /srv/apps/Monopoly
     spa: true
+    env_file: .env
+    env_note: Present in the app repo (build-time); override locally if needed.
 
   - name: MinecraftBot
     repo: https://github.com/ManuelLerchner/Minecraft-Bot-Website.git
@@ -83,6 +85,8 @@ apps:
     domain: tile-planner.manuellerchner.de
     deploy_path: /srv/apps/TilePlanner
     spa: true
+    env_file: .env
+    env_note: Present in the app repo (build-time); override locally if needed.
 
   - name: AlgoExplorer
     repo: https://github.com/ManuelLerchner/algorithm-explorer.git
@@ -106,6 +110,10 @@ apps:
     domain: pi.manuellerchner.de
     deploy_path: /srv/apps/PiController
     pm2_name: PiController
+    env_file: config/config.env
+    env_note: Manual on the Pi — not in git. Create from app docs / prior machine.
+    post_deploy_cmd: >-
+      [ -f config/config.env ] || cp /home/pi/Manuel-Lerchner-Website/config/config.env config/config.env
 
   - name: Backend
     repo: https://github.com/ManuelLerchner/Manuel-Lerchner-Backend-Server.git
@@ -116,6 +124,10 @@ apps:
     domain: api.manuellerchner.de
     deploy_path: /srv/apps/Backend
     pm2_name: Backend
+    env_file: dotenv/.env
+    env_note: Manual on the Pi — copy from dotenv/.env.example and fill secrets.
+    post_deploy_cmd: >-
+      [ -f dotenv/.env ] || cp dotenv/.env.example dotenv/.env
 
   - name: RestaurantApp
     repo: https://github.com/ManuelLerchner/RestaurantApp.git
@@ -127,6 +139,14 @@ apps:
     domain: restaurantapp.manuellerchner.de
     deploy_path: /srv/apps/RestaurantApp
     pm2_name: RestaurantApp
+    # Spring uses embedded H2 (MV store), not SQLite — file at repo root
+    data_file: restaurantDatabase.h2.mv.db
+    data_note: >-
+      H2 database at deploy_path root; git may omit it. Copy from ~/RestaurantApp/ on the Pi
+      or from backup after a fresh clone so data is not reset.
+    post_deploy_cmd: >-
+      [ -f restaurantDatabase.h2.mv.db ] || cp /home/pi/RestaurantApp/restaurantDatabase.h2.mv.db
+      restaurantDatabase.h2.mv.db
 
   # ---------------------------------------------------------------------------
   # Background services — PM2 only, no Caddy entry
@@ -141,6 +161,10 @@ apps:
     domain: null
     deploy_path: /srv/apps/DYNDNS
     pm2_name: DYNDNS
+    env_file: config/.env
+    env_note: Manual on the Pi — not in git.
+    post_deploy_cmd: >-
+      [ -f config/.env ] || cp /home/pi/DeinServerHost-DynDNS-Handler/config/.env config/.env
 
 # ---------------------------------------------------------------------------
 # Redirects — Caddy only, no app managed here

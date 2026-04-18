@@ -3,6 +3,7 @@
 
 import sys
 from pathlib import Path
+from typing import Optional
 
 try:
     import yaml
@@ -16,7 +17,7 @@ README = REPO_ROOT / "README.md"
 BADGE = "[![Build](https://github.com/ManuelLerchner/manuellerchner.de-deploy/actions/workflows/build.yml/badge.svg)](https://github.com/ManuelLerchner/manuellerchner.de-deploy/actions/workflows/build.yml)"
 
 
-def domain_link(domain: str | None) -> str:
+def domain_link(domain: Optional[str]) -> str:
     if not domain or domain == "null":
         return "—"
     return f"[{domain}](https://{domain})"
@@ -53,6 +54,37 @@ def render(config: dict) -> str:
         "",
         "**Permissions:** `/srv/apps` owned by `pi:deploy` (setgid). Both `pi` and `caddy` are",
         "members of the `deploy` group, so Caddy can read static build output without sudo.",
+        "",
+        "## Env files & persistent data",
+        "",
+        "Paths below are **relative to each app's** `deploy_path` on the Pi (see [`apps.yaml`](apps.yaml)).",
+        "Secrets are not stored in this deploy repo — create or copy those files on the Pi.",
+        "",
+        "| App | `env_file` | `data_file` | `post_deploy_cmd` | Notes |",
+        "|-----|------------|-------------|-------------------|-------|",
+    ]
+
+    def cell(val: Optional[str]) -> str:
+        if not val:
+            return "—"
+        safe = val.replace("|", "\\|")
+        return f"`{safe}`"
+
+    for a in apps:
+        ef = a.get("env_file")
+        df = a.get("data_file")
+        if not ef and not df and not a.get("env_note") and not a.get("data_note"):
+            continue
+        notes_parts = []
+        if a.get("env_note"):
+            notes_parts.append(a["env_note"])
+        if a.get("data_note"):
+            notes_parts.append(a["data_note"])
+        pd = a.get("post_deploy_cmd")
+        notes = " ".join(notes_parts) if notes_parts else "—"
+        lines.append(f"| **{a['name']}** | {cell(ef)} | {cell(df)} | {cell(pd)} | {notes} |")
+
+    lines += [
         "",
         "## Static Sites",
         "",

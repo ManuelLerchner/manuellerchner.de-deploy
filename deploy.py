@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Deploy apps defined in apps.yaml to the Raspberry Pi."""
 
-import argparse
 import json
+import shlex
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 try:
     import yaml
@@ -29,10 +30,18 @@ def header(name: str, kind: str) -> None:
     print(f"\n━━━ {name} ({kind}) ━━━", flush=True)
 
 
-def run(cmd: str, cwd: Path | None = None) -> None:
+def run(cmd: str, cwd: Optional[Path] = None) -> None:
     result = subprocess.run(cmd, shell=True, cwd=cwd)
     if result.returncode != 0:
         raise RuntimeError(f"Command failed (exit {result.returncode}): {cmd}")
+
+
+def run_post_deploy(app: dict, deploy_path: Path) -> None:
+    cmd = app.get("post_deploy_cmd")
+    if not cmd:
+        return
+    log(f"post-deploy: {cmd}")
+    run(cmd, cwd=deploy_path)
 
 
 def require(*cmds: str) -> None:
@@ -97,6 +106,8 @@ def get_remote_sha(path: Path) -> str:
 def pull_or_clone(repo: str, path: Path) -> None:
     if (path / ".git").exists():
         log(f"pulling {path}")
+        # Deploy clones should be reproducible; discard tracked local drift (e.g. lockfile churn).
+        run("git reset --hard HEAD", cwd=path)
         run("git pull --ff-only", cwd=path)
     else:
         log(f"cloning {repo} → {path}")
@@ -117,6 +128,8 @@ def deploy_static(app: dict) -> None:
     if build:
         log(f"building: {build}")
         run(build, cwd=deploy_path)
+
+    run_post_deploy(app, deploy_path)
 
     served_path = deploy_path / output
     run(f"chmod -R g+rX {served_path}")
@@ -139,6 +152,8 @@ def deploy_service(app: dict) -> None:
         log(f"building: {build}")
         run(build, cwd=deploy_path)
 
+    run_post_deploy(app, deploy_path)
+
     log(f"restarting PM2 process '{pm2_name}'")
     is_running = subprocess.run(
         f"pm2 describe {pm2_name}",
@@ -148,7 +163,8 @@ def deploy_service(app: dict) -> None:
     if is_running:
         run(f"pm2 restart {pm2_name}")
     elif start_cmd:
-        run(f"pm2 start --name {pm2_name} --interpreter bash -- -c 'cd {deploy_path} && {start_cmd}'")
+        quoted = shlex.quote(f"cd {deploy_path} && {start_cmd}")
+        run(f"pm2 start bash --name {pm2_name} -- -lc {quoted}")
     else:
         run(f"pm2 start {deploy_path / entry} --name {pm2_name}")
 
@@ -166,10 +182,9 @@ DEPLOY_FN = {
 
 # ── commands ──────────────────────────────────────────────────────────────────
 
-def cmd_deploy(args: argparse.Namespace, apps: list[dict]) -> None:
+def cmd_deploy(target: str, apps: list[dict]) -> None:
     require("git", "pm2")
 
-    target = args.app
     if target != "all" and not any(a["name"] == target for a in apps):
         sys.exit(f"App '{target}' not found in apps.yaml")
 
@@ -291,25 +306,14 @@ def cmd_update(apps: list[dict]) -> None:
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Deploy apps from apps.yaml")
-    sub = parser.add_subparsers(dest="command")
-
-    sub.add_parser("update", help="Fetch remotes and redeploy apps with new commits")
-
-    # positional for bare: deploy.py [app|all]
-    parser.add_argument("app", nargs="?", default="all",
-                        help="App name to deploy, or 'all' (default). "
-                             "Use 'update' subcommand to check for remote changes.")
-
-    args = parser.parse_args()
-
     config = yaml.safe_load(APPS_YAML.read_text())
     apps: list[dict] = config["apps"]
 
-    if args.command == "update":
+    if len(sys.argv) > 1 and sys.argv[1] == "update":
         cmd_update(apps)
     else:
-        cmd_deploy(args, apps)
+        target = sys.argv[1] if len(sys.argv) > 1 else "all"
+        cmd_deploy(target, apps)
 
 
 if __name__ == "__main__":
