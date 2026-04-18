@@ -9,7 +9,7 @@ jobs:
   domain-health-check:
     runs-on: ubuntu-latest
     # secrets.DOMAIN_HEALTH_CHECK_SECRET → env DOMAIN_HEALTH_CHECK_SECRET for all steps.
-    # Sends x-domain-health-check header and ?health_check_token=… (both trimmed); WAF should OR-match either.
+    # Sends x-domain-health-check header (trimmed); WAF skip rule should match this header.
     env:
       DOMAIN_HEALTH_CHECK_SECRET: ${{ secrets.DOMAIN_HEALTH_CHECK_SECRET }}
 
@@ -82,14 +82,11 @@ jobs:
           while IFS= read -r domain; do
             [ -z "$domain" ] && continue
             base="https://${domain}/"
-            # Do not log full URL (would expose token). --data-urlencode is safe for non-hex secrets too.
-            echo "Checking ${base} (header x-domain-health-check + query health_check_token)"
+            echo "Checking ${base} (header x-domain-health-check)"
 
             code="$(curl --silent --show-error --location --max-time 25 \
-              -G "$base" \
-              --data-urlencode "health_check_token=${DH}" \
               -H "x-domain-health-check: ${DH}" \
-              -o /dev/null -w "%{http_code}")"
+              -o /dev/null -w "%{http_code}" "$base")"
 
             if [ "$code" = "000" ]; then
               echo "::error title=Domain unreachable::${base} is not reachable (transport/DNS/TLS error)"
@@ -99,7 +96,7 @@ jobs:
             else
               hint=""
               if [ "$code" = "403" ] || [ "$code" = "401" ]; then
-                hint=" (Cloudflare: Skip rule must match header or \`health_check_token\` query — same secret as \`DOMAIN_HEALTH_CHECK_SECRET\` — see README)"
+                hint=" (Cloudflare: Skip rule must match header \`x-domain-health-check\` with the same secret as \`DOMAIN_HEALTH_CHECK_SECRET\` — see README)"
               fi
               echo "::error title=Unexpected HTTP status::${base} returned HTTP $code (expected 2xx after redirects)$hint"
               failed=1
@@ -157,7 +154,7 @@ jobs:
         run: |
           failed=0
           if [ "${{ steps.http_check.outcome }}" != "success" ]; then
-            echo "::error::HTTPS 2xx check failed. Set DOMAIN_HEALTH_CHECK_SECRET and a WAF Skip rule matching header x-domain-health-check and/or query health_check_token."
+            echo "::error::HTTPS 2xx check failed. Set DOMAIN_HEALTH_CHECK_SECRET and a WAF Skip rule matching header x-domain-health-check."
             failed=1
           fi
           if [ "${{ steps.tls_check.outcome }}" != "success" ]; then

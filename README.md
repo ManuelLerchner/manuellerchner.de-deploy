@@ -25,19 +25,17 @@ after redirects. That catches bad gateways, origin errors, and cases where Cloud
 block page to automated clients (which the old check incorrectly treated as healthy).
 
 **Cloudflare bypass:** add repo secret **`DOMAIN_HEALTH_CHECK_SECRET`** (same value in Cloudflare),
-`openssl rand -hex 32`. Each probe sends **both** the header **`x-domain-health-check: <secret>`** and the query
-**`?health_check_token=<secret>`** (so Security Events show the token even when header visibility is limited).
-**Do not** share links with this query — it appears in access logs.
+`openssl rand -hex 32`. Each probe sends the header **`x-domain-health-check: <secret>`**.
 
 In **Security → WAF → Custom rules** (same zone as `manuellerchner.de`), create a rule **above** other custom rules:
 
-- **When:** match **either** channel, same hex string in both places:
-  `(any(http.request.headers["x-domain-health-check"][*] eq "<secret>") or any(http.request.uri.args["health_check_token"][*] eq "<secret>"))`
+- **When:** match the header value:
+  `(any(http.request.headers["x-domain-health-check"][*] eq "<secret>"))`
   Values must match the trimmed Actions secret — re-save the GitHub secret as **one line** if you still get 403.
 - **Then:** *Skip* — enable **Super Bot Fight Mode**, **Browser Integrity Check**, **All managed rules**,
   and **Rate limiting** at minimum; add more if you still see 403.
 
-Confirm with: `curl -sS -o /dev/null -w '%{http_code}\n' -G 'https://example.manuellerchner.de/' --data-urlencode "health_check_token=YOUR_SECRET" -H "x-domain-health-check: YOUR_SECRET"`
+Confirm with: `curl -sS -o /dev/null -w '%{http_code}\n' -H "x-domain-health-check: YOUR_SECRET" 'https://example.manuellerchner.de/'`
 — expect **200** (or 3xx then 200 with `-L`). If curl works locally but Actions does not, the secret or WAF expression differs.
 
 ## Env files & persistent data
