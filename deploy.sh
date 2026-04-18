@@ -56,9 +56,10 @@ deploy_service() {
   local name=$1
   local repo;        repo=$(yq_app "$name" repo)
   local build;       build=$(yq_app "$name" "build // \"\"")
-  local entry;       entry=$(yq_app "$name" entry)
   local deploy_path; deploy_path=$(yq_app "$name" deploy_path)
   local pm2_name;    pm2_name=$(yq_app "$name" "pm2_name // \"$name\"")
+  local entry;       entry=$(yq_app "$name" "entry // \"null\"")
+  local start_cmd;   start_cmd=$(yq_app "$name" "start_cmd // \"null\"")
 
   log "[$name] pulling $repo → $deploy_path"
   pull_or_clone "$repo" "$deploy_path"
@@ -72,7 +73,13 @@ deploy_service() {
   if pm2 describe "$pm2_name" &>/dev/null; then
     pm2 restart "$pm2_name"
   else
-    pm2 start "$deploy_path/$entry" --name "$pm2_name"
+    if [[ "$start_cmd" != "null" ]]; then
+      # Non-Node service (e.g., Java) — run arbitrary command via bash
+      pm2 start --name "$pm2_name" --interpreter bash -- \
+        -c "cd '$deploy_path' && $start_cmd"
+    else
+      pm2 start "$deploy_path/$entry" --name "$pm2_name"
+    fi
   fi
   pm2 save --force
 

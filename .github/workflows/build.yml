@@ -1,0 +1,78 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # ── Generate matrix from apps.yaml ──────────────────────────────────────────
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.json }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mikefarah/yq@v4.44.1
+
+      - name: Generate matrix
+        id: matrix
+        run: |
+          # Emit one JSON object per app that has a build command
+          json=$(yq -o=json '.apps
+            | map(select(.build != null and .build != "null"))
+            | map({
+                "name":        .name,
+                "repo":        .repo,
+                "build":       .build,
+                "toolchain":   (if .build | test("gradlew") then "java" else "node" end),
+                "node_version": "20",
+                "java_version": "17"
+              })' apps.yaml)
+          echo "json=$json" >> "$GITHUB_OUTPUT"
+
+  # ── Build each app in parallel ───────────────────────────────────────────────
+  build:
+    needs: setup
+    name: ${{ matrix.app.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false          # keep building other apps even if one fails
+      matrix:
+        app: ${{ fromJson(needs.setup.outputs.matrix) }}
+
+    steps:
+      - name: Checkout ${{ matrix.app.name }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.app.repo != '' && matrix.app.repo || github.repository }}
+
+      # ── Node toolchain ──────────────────────────────────────────────────────
+      - name: Setup Node ${{ matrix.app.node_version }}
+        if: matrix.app.toolchain == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.app.node_version }}
+          cache: npm
+
+      # ── Java toolchain ──────────────────────────────────────────────────────
+      - name: Setup Java ${{ matrix.app.java_version }}
+        if: matrix.app.toolchain == 'java'
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.app.java_version }}
+          distribution: temurin
+
+      - name: Cache Gradle
+        if: matrix.app.toolchain == 'java'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ matrix.app.name }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ matrix.app.name }}-
+
+      # ── Build ───────────────────────────────────────────────────────────────
+      - name: Build
+        run: ${{ matrix.app.build }}

@@ -98,21 +98,12 @@ apps:
     deploy_path: /srv/apps/Backend
     pm2_name: Backend
 
-  - name: MoneyFlow
-    repo: https://github.com/ManuelLerchner/MoneyFlow.git  # private — ensure Pi has access
-    build: npm ci
-    type: service
-    entry: app.js                      # TODO: verify entry point
-    port: 3020
-    domain: moneyflow.manuellerchner.de
-    deploy_path: /srv/apps/MoneyFlow
-    pm2_name: MoneyFlow
-
   - name: RestaurantApp
-    repo: https://github.com/ManuelLerchner/RestaurantApp.git  # TODO: verify repo URL
-    build: npm ci
+    repo: https://github.com/ManuelLerchner/RestaurantApp.git
+    build: ./gradlew bootJar --no-daemon
     type: service
-    entry: app.js                      # TODO: verify entry point
+    # Spring Boot JAR — not a Node app, PM2 runs it via java
+    start_cmd: java -jar build/libs/EIST22t02-Four0Four-1.0.0.jar
     port: 3019
     domain: restaurantapp.manuellerchner.de
     deploy_path: /srv/apps/RestaurantApp
