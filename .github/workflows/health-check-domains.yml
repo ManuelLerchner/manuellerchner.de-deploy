@@ -8,8 +8,8 @@ on:
 jobs:
   domain-health-check:
     runs-on: ubuntu-latest
-    # Optional: set in repo Settings → Secrets → Actions. If set, curl sends
-    # header X-Domain-Health-Check: <secret> so Cloudflare can allow this probe.
+    # secrets.DOMAIN_HEALTH_CHECK_SECRET → env DOMAIN_HEALTH_CHECK_SECRET for all steps.
+    # curl sends lowercase header name (matches http.request.headers["x-domain-health-check"] in Cloudflare).
     env:
       DOMAIN_HEALTH_CHECK_SECRET: ${{ secrets.DOMAIN_HEALTH_CHECK_SECRET }}
 
@@ -73,20 +73,15 @@ jobs:
         continue-on-error: true
         run: |
           failed=0
-          # Plain curl; auth against Cloudflare is only the shared secret header (see README).
+          # Plain curl; value must match Cloudflare `eq "…"` exactly (quoted to preserve the secret).
 
           while IFS= read -r domain; do
             [ -z "$domain" ] && continue
             url="https://$domain/"
             echo "Checking $url"
 
-            extra=( )
-            if [ -n "${DOMAIN_HEALTH_CHECK_SECRET:-}" ]; then
-              extra+=( -H "X-Domain-Health-Check: ${DOMAIN_HEALTH_CHECK_SECRET}" )
-            fi
-
             code="$(curl --silent --show-error --location --max-time 25 \
-              "${extra[@]}" \
+              -H "x-domain-health-check: ${DOMAIN_HEALTH_CHECK_SECRET}" \
               -o /dev/null -w "%{http_code}" "$url")"
 
             if [ "$code" = "000" ]; then
@@ -155,7 +150,7 @@ jobs:
         run: |
           failed=0
           if [ "${{ steps.http_check.outcome }}" != "success" ]; then
-            echo "::error::HTTPS 2xx check failed. Set repo secret DOMAIN_HEALTH_CHECK_SECRET and allow header X-Domain-Health-Check in Cloudflare if bots are blocked."
+            echo "::error::HTTPS 2xx check failed. Set repo secret DOMAIN_HEALTH_CHECK_SECRET and allow header x-domain-health-check in Cloudflare if bots are blocked."
             failed=1
           fi
           if [ "${{ steps.tls_check.outcome }}" != "success" ]; then
