@@ -128,6 +128,13 @@ def configure_git_hooks() -> None:
     log("pre-commit hook active")
 
 
+def check_runtime_files() -> None:
+    log("Checking declared runtime env/data files...")
+    result = run(f"python3 {DEPLOY_DIR / 'scripts' / 'check_runtime_files.py'}", check=False)
+    if result.returncode != 0:
+        log("Warning: runtime file check reported issues")
+
+
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -140,6 +147,7 @@ def main() -> None:
     setup_caddy_sudoers()
     make_executable()
     configure_git_hooks()
+    check_runtime_files()
 
     log("")
     log("Bootstrap complete. Next steps:")

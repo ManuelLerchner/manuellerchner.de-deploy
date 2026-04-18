@@ -80,6 +80,9 @@ python3 deploy.py Website
 # Validate apps.yaml
 python3 scripts/lint.py
 
+# Check required runtime env/data files from apps.yaml
+python3 scripts/check_runtime_files.py
+
 # Regenerate Caddyfile
 python3 scripts/gen_caddyfile.py
 
