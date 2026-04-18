@@ -14,7 +14,7 @@ apps:
 
   - name: Monopoly
     repo: https://github.com/ManuelLerchner/Monopoly-Smart-Bank.git
-    build: npm ci && npm run build
+    build: npm install --legacy-peer-deps && npm run build
     type: static
     output: build
     domain: monopoly.manuellerchner.de
@@ -23,7 +23,7 @@ apps:
 
   - name: MinecraftBot
     repo: https://github.com/ManuelLerchner/Minecraft-Bot-Website.git
-    build: npm ci && npm run build
+    build: npm install --legacy-peer-deps && npm run build
     type: static
     output: dist/Minecraft-Bot
     domain: minecraft-bot.manuellerchner.de
@@ -32,7 +32,7 @@ apps:
 
   - name: TaskPlanner
     repo: https://github.com/ManuelLerchner/Task-Planner.git
-    build: npm ci && npm run build
+    build: npm install --legacy-peer-deps && npm run build
     type: static
     output: dist/Task-Planner
     domain: taskplanner.manuellerchner.de
@@ -41,7 +41,7 @@ apps:
 
   - name: MockTrading
     repo: https://github.com/ManuelLerchner/Mock-Trading.git
-    build: npm ci && npm run build
+    build: npm install --legacy-peer-deps && npm run build
     type: static
     output: dist/Mock-Trading
     domain: mocktrading.manuellerchner.de
@@ -50,7 +50,7 @@ apps:
 
   - name: ExpenseTracker
     repo: https://github.com/ManuelLerchner/Expense-Tracker.git
-    build: npm ci && npm run build
+    build: npm install --legacy-peer-deps && npm run build
     type: static
     output: dist/Expense-Tracker
     domain: expensetracker.manuellerchner.de
@@ -59,7 +59,7 @@ apps:
 
   - name: TilePlanner
     repo: https://github.com/ManuelLerchner/tile-planner.git
-    build: npm ci && npm run build
+    build: npm install --legacy-peer-deps && npm run build
     type: static
     output: build
     domain: tile-planner.manuellerchner.de
@@ -68,7 +68,7 @@ apps:
 
   - name: IOTVisualizer
     repo: https://github.com/ManuelLerchner/IOT-Data-Visualizer.git
-    build: npm ci && npm run build
+    build: npm install --legacy-peer-deps && npm run build
     type: static
     output: build
     domain: iot-data-visualisation.manuellerchner.de
@@ -77,7 +77,7 @@ apps:
 
   - name: AlgoExplorer
     repo: https://github.com/ManuelLerchner/algorithm-explorer.git
-    build: npm ci && npm run build
+    build: npm install --legacy-peer-deps && npm run build
     type: static
     output: build
     domain: algoexplorer.manuellerchner.de
