@@ -87,6 +87,12 @@ Secrets are not stored in this deploy repo — create or copy those files on the
 |------|----|
 | `www.manuellerchner.de` | `https://{labels.1}.{labels.0}{uri}` |
 
+## Passthroughs (external, Caddy only)
+
+| Name | Domain | Proxy |
+|------|--------|-------|
+| **n8n** | [n8n.manuellerchner.de](https://n8n.manuellerchner.de) | `http://localhost:5678` |
+
 ## Usage
 
 ```bash

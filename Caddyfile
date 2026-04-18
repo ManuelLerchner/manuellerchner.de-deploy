@@ -95,3 +95,7 @@ restaurantapp.manuellerchner.de {
 }
 
 # ── Passthroughs (external services, not deployed by this repo) ───────────────
+
+n8n.manuellerchner.de {
+	reverse_proxy http://localhost:5678
+}

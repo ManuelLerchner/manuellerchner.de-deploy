@@ -178,4 +178,7 @@ redirects:
 # ---------------------------------------------------------------------------
 # Passthroughs — external services proxied by Caddy, not managed here
 # ---------------------------------------------------------------------------
-passthrough: []
+passthrough:
+  - name: n8n
+    domain: n8n.manuellerchner.de
+    proxy: http://localhost:5678
