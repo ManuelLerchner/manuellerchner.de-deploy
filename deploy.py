@@ -155,18 +155,17 @@ def deploy_service(app: dict) -> None:
     run_post_deploy(app, deploy_path)
 
     log(f"restarting PM2 process '{pm2_name}'")
-    is_running = subprocess.run(
-        f"pm2 describe {pm2_name}",
-        shell=True, capture_output=True
-    ).returncode == 0
-
-    if is_running:
-        run(f"pm2 restart {pm2_name}")
-    elif start_cmd:
+    # PM2 must use the app's deploy_path as cwd (dotenv uses ./config/config.env, etc.)
+    run(f"pm2 delete {pm2_name} || true")
+    cwd_q = shlex.quote(str(deploy_path))
+    if start_cmd:
         quoted = shlex.quote(f"cd {deploy_path} && {start_cmd}")
-        run(f"pm2 start bash --name {pm2_name} -- -lc {quoted}")
+        run(f"pm2 start bash --name {pm2_name} --cwd {cwd_q} -- -lc {quoted}")
     else:
-        run(f"pm2 start {deploy_path / entry} --name {pm2_name}")
+        run(
+            f"pm2 start {shlex.quote(str(deploy_path / entry))} "
+            f"--name {pm2_name} --cwd {cwd_q}"
+        )
 
     run("pm2 save --force")
     log("✓ service running")
