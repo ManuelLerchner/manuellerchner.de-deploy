@@ -123,7 +123,7 @@ jobs:
       # ── Java toolchain ────────────────────────────────────────────────────────
       - name: Setup Java ${{ matrix.app.java_version }}
         if: matrix.app.toolchain == 'java'
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.app.java_version }}
           distribution: temurin
