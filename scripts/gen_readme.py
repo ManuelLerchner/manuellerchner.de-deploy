@@ -129,16 +129,22 @@ BADGE,
             "`deploy.py` runs configured static builds in a user systemd scope. GitHub Actions runs the portable build command above without these limits.",
             "For unattended deployments, enable the Pi user's systemd manager once: `sudo loginctl enable-linger pi`.",
             "",
-            "| App | CPU quota | Memory high/max | Node heap | Nice | I/O priority |",
-            "|-----|-----------|-----------------|-----------|------|--------------|",
+            "| App | CPU quota | Memory high/max | Node heap | Nice | I/O priority | Install output |",
+            "|-----|-----------|-----------------|-----------|------|--------------|----------------|",
         ]
         for a in limited_static_apps:
             limits = a["pi_build_limits"]
+            install_output = (
+                "`--foreground-scripts --no-progress`"
+                if limits["npm_ci_foreground_scripts"]
+                else "default"
+            )
             lines.append(
                 f"| **{a['name']}** | `{limits['cpu_quota']}` | "
                 f"`{limits['memory_high']}` / `{limits['memory_max']}` | "
                 f"`{limits['node_max_old_space_size']} MiB` | `{limits['nice']}` | "
-                f"class `{limits['ionice_class']}`, level `{limits['ionice_level']}` |"
+                f"class `{limits['ionice_class']}`, level `{limits['ionice_level']}` | "
+                f"{install_output} |"
             )
 
     lines += [

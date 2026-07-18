@@ -73,16 +73,16 @@ Compose environment values can be stored in `apps.yaml`; only use that for publi
 `deploy.py` runs configured static builds in a user systemd scope. GitHub Actions runs the portable build command above without these limits.
 For unattended deployments, enable the Pi user's systemd manager once: `sudo loginctl enable-linger pi`.
 
-| App | CPU quota | Memory high/max | Node heap | Nice | I/O priority |
-|-----|-----------|-----------------|-----------|------|--------------|
-| **Pathfinder** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
-| **Monopoly** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
-| **MinecraftBot** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
-| **TaskPlanner** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
-| **MockTrading** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
-| **ExpenseTracker** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
-| **TilePlanner** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
-| **AlgoExplorer** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
+| App | CPU quota | Memory high/max | Node heap | Nice | I/O priority | Install output |
+|-----|-----------|-----------------|-----------|------|--------------|----------------|
+| **Pathfinder** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **Monopoly** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **MinecraftBot** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **TaskPlanner** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **MockTrading** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **ExpenseTracker** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **TilePlanner** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **AlgoExplorer** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
 
 ## Backend Services (PM2)
 

@@ -42,6 +42,8 @@ def pi_build_command(app: dict) -> Optional[str]:
     limits = app.get("pi_build_limits")
     if not build or not limits:
         return build
+    if limits["npm_ci_foreground_scripts"]:
+        build = build.replace("npm ci", "npm ci --foreground-scripts --no-progress", 1)
 
     return " ".join([
         "systemd-run", "--user", "--scope",

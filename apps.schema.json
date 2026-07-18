@@ -90,7 +90,8 @@
         "nice",
         "ionice_class",
         "ionice_level",
-        "node_max_old_space_size"
+        "node_max_old_space_size",
+        "npm_ci_foreground_scripts"
       ],
       "additionalProperties": false,
       "properties": {
@@ -122,6 +123,9 @@
         "node_max_old_space_size": {
           "type": "integer",
           "minimum": 256
+        },
+        "npm_ci_foreground_scripts": {
+          "type": "boolean"
         }
       }
     },

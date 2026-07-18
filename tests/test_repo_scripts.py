@@ -32,8 +32,9 @@ def test_static_builds_use_pi_resource_limits_only_during_deploy() -> None:
     assert app["build"] == "npm ci && npm run build"
     assert deploy.pi_build_command(app) == (
         "systemd-run --user --scope -p CPUQuota=200% -p MemoryHigh=2500M "
-        "-p MemoryMax=3G nice -n 15 ionice -c 2 -n 7 "
-        "env NODE_OPTIONS=--max-old-space-size=2304 sh -c 'npm ci && npm run build'"
+        "-p MemoryMax=3G nice -n 10 ionice -c 2 -n 5 "
+        "env NODE_OPTIONS=--max-old-space-size=2304 "
+        "sh -c 'npm ci --foreground-scripts --no-progress && npm run build'"
     )
 
 
