@@ -44,6 +44,8 @@ def main() -> None:
             rel = app.get(field)
             if not rel:
                 continue
+            if field == "env_file" and "env" in app:
+                continue
             checked += 1
             target = deploy_dir / rel
             if not target.exists():

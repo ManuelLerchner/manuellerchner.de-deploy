@@ -16,6 +16,10 @@ APPS_SCHEMA = Path(__file__).parent.parent / "apps.schema.json"
 
 REQUIRED_STATIC  = {"name", "repo", "type", "output", "domain", "deploy_path"}
 REQUIRED_SERVICE = {"name", "repo", "type", "deploy_path", "pm2_name"}
+REQUIRED_COMPOSE = {
+    "name", "repo", "type", "deploy_path", "domain", "port", "compose_file",
+    "compose_project", "env_file", "env",
+}
 
 errors: list[str] = []
 warnings: list[str] = []
@@ -30,7 +34,12 @@ def warn(msg: str) -> None:
 
 
 def check_required_fields(app: dict) -> None:
-    required = REQUIRED_STATIC if app["type"] == "static" else REQUIRED_SERVICE
+    required_by_type = {
+        "static": REQUIRED_STATIC,
+        "service": REQUIRED_SERVICE,
+        "compose": REQUIRED_COMPOSE,
+    }
+    required = required_by_type.get(app["type"], set())
     missing = required - app.keys()
     if missing:
         err(f"[{app.get('name', '?')}] missing fields: {', '.join(sorted(missing))}")

@@ -77,7 +77,7 @@ algoexplorer.manuellerchner.de {
 	file_server
 }
 
-# ── Node / backend services ───────────────────────────────────────────────────
+# ── Backend / Compose services ───────────────────────────────────────────────
 
 pi.manuellerchner.de {
 	reverse_proxy localhost:3000
@@ -91,6 +91,11 @@ api.manuellerchner.de {
 
 restaurantapp.manuellerchner.de {
 	reverse_proxy localhost:3019
+	encode gzip
+}
+
+panic.manuellerchner.de {
+	reverse_proxy localhost:8080
 	encode gzip
 }
 

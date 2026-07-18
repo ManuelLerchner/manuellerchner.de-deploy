@@ -36,7 +36,9 @@ def generate(config: dict) -> str:
 
     # ── Apps ───────────────────────────────────────────────────────────────────
     static_apps = [a for a in config["apps"] if a["type"] == "static" and a.get("domain")]
-    service_apps = [a for a in config["apps"] if a["type"] == "service" and a.get("domain")]
+    service_apps = [
+        a for a in config["apps"] if a["type"] in ("service", "compose") and a.get("domain")
+    ]
 
     parts.append("# ── Static apps ───────────────────────────────────────────────────────────────\n")
     for app in static_apps:
@@ -48,7 +50,7 @@ def generate(config: dict) -> str:
         lines += ["encode gzip", "file_server"]
         parts.append(block(app["domain"], *lines))
 
-    parts.append("# ── Node / backend services ───────────────────────────────────────────────────\n")
+    parts.append("# ── Backend / Compose services ───────────────────────────────────────────────\n")
     for app in service_apps:
         parts.append(block(app["domain"], f"reverse_proxy localhost:{app['port']}", "encode gzip"))
 

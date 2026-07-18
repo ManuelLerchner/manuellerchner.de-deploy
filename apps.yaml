@@ -151,6 +151,35 @@ apps:
       [ -f "$B" ] && { [ ! -f "$T" ] || [ "$(stat -c%s "$B")" -gt "$(stat -c%s "$T")" ]; } && cp "$B" "$T"
 
   # ---------------------------------------------------------------------------
+  # Docker Compose services — Caddy reverse-proxies the Compose edge service
+  # ---------------------------------------------------------------------------
+
+  - name: PanicAtTheConsole
+    repo: https://github.com/AET-DevOps26/team-panic-at-the-console.git
+    type: compose
+    domain: panic.manuellerchner.de
+    port: 8080
+    deploy_path: /srv/apps/PanicAtTheConsole
+    compose_file: infra/compose/docker-compose.yml
+    compose_project: panic-at-the-console
+    env_file: .env
+    env_note: Public deployment configuration managed in apps.yaml; Ollama only.
+    env:
+      IMAGE_TAG: latest
+      POSTGRES_USER: devops
+      POSTGRES_PASSWORD: panic-public-postgres-password
+      JWT_SECRET: panic-public-jwt-secret-change-before-public-use-0123456789abcdef
+      INVITE_CODE: ""
+      NATS_URL: nats://nats:4222
+      OLLAMA_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:0.5b
+      LLM_PROVIDER: ollama
+      LLM_FALLBACK_ENABLED: "false"
+      GRAFANA_ADMIN_USER: admin
+      GRAFANA_ADMIN_PASSWORD: admin
+      WEBHOOK_REQUIRE_SIGNATURE: "true"
+
+  # ---------------------------------------------------------------------------
   # Background services — PM2 only, no Caddy entry
   # ---------------------------------------------------------------------------
 

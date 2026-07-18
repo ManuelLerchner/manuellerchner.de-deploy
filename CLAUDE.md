@@ -29,9 +29,11 @@ Both are regenerated automatically on every `git commit` via `.githooks/pre-comm
   - Non-Node (e.g., Java): set `start_cmd: java -jar build/libs/app.jar`
 
 ## Security note
-Repo is public. No credentials or secrets are stored here. Internal Pi ports
-are behind Caddy and not directly exposed. Pi-Controller (`pi.manuellerchner.de`)
-should have its own auth if it contains sensitive functionality.
+Repo is public. `PanicAtTheConsole` stores deliberately public demo credentials in
+`apps.yaml`; do not use them to protect real users or data. The student's Compose
+file also publishes internal service ports, so restrict network access to the Pi.
+Pi-Controller (`pi.manuellerchner.de`) should have its own auth if it contains
+sensitive functionality.
 
 ## First-time Pi setup
 ```bash

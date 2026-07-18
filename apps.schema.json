@@ -250,6 +250,69 @@
               ]
             }
           ]
+        },
+        {
+          "type": "object",
+          "required": [
+            "name",
+            "repo",
+            "type",
+            "deploy_path",
+            "domain",
+            "port",
+            "compose_file",
+            "compose_project",
+            "env_file",
+            "env"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "repo": {
+              "type": "string",
+              "pattern": "^https://github\\.com/.+\\.git$"
+            },
+            "type": {
+              "const": "compose"
+            },
+            "deploy_path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "domain": {
+              "$ref": "#/$defs/domain"
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "compose_file": {
+              "type": "string",
+              "minLength": 1
+            },
+            "compose_project": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9_-]*$"
+            },
+            "env_file": {
+              "type": "string",
+              "minLength": 1
+            },
+            "env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "env_note": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
         }
       ]
     }

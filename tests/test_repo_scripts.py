@@ -37,3 +37,16 @@ def test_gen_caddyfile_contains_expected_domains() -> None:
     caddyfile = (REPO_ROOT / "Caddyfile").read_text(encoding="utf-8")
     assert "manuellerchner.de {" in caddyfile
     assert "api.manuellerchner.de {" in caddyfile
+    assert "panic.manuellerchner.de {" in caddyfile
+    assert "reverse_proxy localhost:8080" in caddyfile
+
+
+def test_panic_compose_config_uses_ollama_only() -> None:
+    import yaml
+
+    config = yaml.safe_load((REPO_ROOT / "apps.yaml").read_text(encoding="utf-8"))
+    app = next(app for app in config["apps"] if app["name"] == "PanicAtTheConsole")
+
+    assert app["env"]["LLM_PROVIDER"] == "ollama"
+    assert app["env"]["LLM_FALLBACK_ENABLED"] == "false"
+    assert not any(key.startswith("LOGOS_") for key in app["env"])

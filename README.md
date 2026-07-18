@@ -11,7 +11,7 @@ Caddyfile and README are auto-generated — **do not edit by hand**.
 
 ```
 apps.yaml ──► scripts/gen_caddyfile.py ──► Caddyfile ──► symlinked to /etc/caddy/Caddyfile
-         ╰──► deploy.py ──► git pull + build + pm2/caddy per app
+         ╰──► deploy.py ──► git pull + PM2/Docker Compose + Caddy per app
 ```
 
 **Permissions:** `/srv/apps` owned by `pi:deploy` (setgid). Both `pi` and `caddy` are
@@ -41,7 +41,7 @@ Confirm with: `curl -sS -o /dev/null -w '%{http_code}\n' -H "x-domain-health-che
 ## Env files & persistent data
 
 Paths below are **relative to each app's** `deploy_path` on the Pi (see [`apps.yaml`](apps.yaml)).
-Secrets are not stored in this deploy repo — create or copy those files on the Pi.
+Compose environment values can be stored in `apps.yaml`; only use that for public/demo deployments.
 
 | App | `env_file` | `data_file` | `post_deploy_cmd` | Notes |
 |-----|------------|-------------|-------------------|-------|
@@ -50,6 +50,7 @@ Secrets are not stored in this deploy repo — create or copy those files on the
 | **PiController** | `config/config.env` | — | `[ -f config/config.env ] \|\| cp /home/pi/Manuel-Lerchner-Website/config/config.env config/config.env` | Manual on the Pi — not in git. Create from app docs / prior machine. |
 | **Backend** | `dotenv/.env` | — | `[ -f dotenv/.env ] \|\| cp dotenv/.env.example dotenv/.env` | Manual on the Pi — copy from dotenv/.env.example and fill secrets. |
 | **RestaurantApp** | — | `src/main/resources/restaurantDatabase.h2.mv.db` | `mkdir -p src/main/resources && B=/home/pi/RestaurantApp/restaurantDatabase.h2.mv.db && T=src/main/resources/restaurantDatabase.h2.mv.db && [ -f "$B" ] && { [ ! -f "$T" ] \|\| [ "$(stat -c%s "$B")" -gt "$(stat -c%s "$T")" ]; } && cp "$B" "$T"` | H2 stores data under src/main/resources/ (see jdbc URL in application.properties), not the repo root. Copy from ~/RestaurantApp/restaurantDatabase.h2.mv.db if missing or stale after deploy. |
+| **PanicAtTheConsole** | `.env` | — | — | Public deployment configuration managed in apps.yaml; Ollama only. |
 | **DYNDNS** | `config/.env` | — | `[ -f config/.env ] \|\| cp /home/pi/DeinServerHost-DynDNS-Handler/config/.env config/.env` | Manual on the Pi — not in git. |
 
 ## Static Sites
@@ -74,6 +75,12 @@ Secrets are not stored in this deploy repo — create or copy those files on the
 | **PiController** | [pi.manuellerchner.de](https://pi.manuellerchner.de) | `3000` | Node.js |
 | **Backend** | [api.manuellerchner.de](https://api.manuellerchner.de) | `4000` | Node.js |
 | **RestaurantApp** | [restaurantapp.manuellerchner.de](https://restaurantapp.manuellerchner.de) | `3019` | Java (Spring Boot) |
+
+## Docker Compose Services
+
+| App | Domain | Port | Compose project |
+|-----|--------|------|-----------------|
+| **PanicAtTheConsole** | [panic.manuellerchner.de](https://panic.manuellerchner.de) | `8080` | `panic-at-the-console` |
 
 ## Background Services (PM2, no domain)
 
@@ -104,6 +111,9 @@ python3 deploy.py all
 
 # Deploy one app
 python3 deploy.py Website
+
+# Docker Compose apps require Docker Engine and the Compose plugin
+python3 deploy.py PanicAtTheConsole
 
 # Validate apps.yaml
 python3 scripts/lint.py

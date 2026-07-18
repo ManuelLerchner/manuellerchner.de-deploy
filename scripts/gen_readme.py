@@ -36,6 +36,7 @@ def render(config: dict) -> str:
     static_apps   = [a for a in apps if a["type"] == "static"]
     service_apps  = [a for a in apps if a["type"] == "service" and a.get("domain") and a["domain"] != "null"]
     bg_services   = [a for a in apps if a["type"] == "service" and (not a.get("domain") or a["domain"] == "null")]
+    compose_apps  = [a for a in apps if a["type"] == "compose"]
 
     lines = [
         "# manuellerchner.de — Deploy",
@@ -51,7 +52,7 @@ BADGE,
         "",
         "```",
         "apps.yaml ──► scripts/gen_caddyfile.py ──► Caddyfile ──► symlinked to /etc/caddy/Caddyfile",
-        "         ╰──► deploy.py ──► git pull + build + pm2/caddy per app",
+        "         ╰──► deploy.py ──► git pull + PM2/Docker Compose + Caddy per app",
         "```",
         "",
         "**Permissions:** `/srv/apps` owned by `pi:deploy` (setgid). Both `pi` and `caddy` are",
@@ -81,7 +82,7 @@ BADGE,
         "## Env files & persistent data",
         "",
         "Paths below are **relative to each app's** `deploy_path` on the Pi (see [`apps.yaml`](apps.yaml)).",
-        "Secrets are not stored in this deploy repo — create or copy those files on the Pi.",
+        "Compose environment values can be stored in `apps.yaml`; only use that for public/demo deployments.",
         "",
         "| App | `env_file` | `data_file` | `post_deploy_cmd` | Notes |",
         "|-----|------------|-------------|-------------------|-------|",
@@ -131,6 +132,20 @@ BADGE,
         runtime = "Java (Spring Boot)" if a.get("start_cmd") else "Node.js"
         lines.append(f"| **{a['name']}** | {domain_link(a.get('domain'))} | `{a.get('port', '—')}` | {runtime} |")
 
+    if compose_apps:
+        lines += [
+            "",
+            "## Docker Compose Services",
+            "",
+            "| App | Domain | Port | Compose project |",
+            "|-----|--------|------|-----------------|",
+        ]
+        for a in compose_apps:
+            lines.append(
+                f"| **{a['name']}** | {domain_link(a.get('domain'))} | "
+                f"`{a['port']}` | `{a['compose_project']}` |"
+            )
+
     if bg_services:
         lines += [
             "",
@@ -177,6 +192,9 @@ BADGE,
         "",
         "# Deploy one app",
         "python3 deploy.py Website",
+        "",
+        "# Docker Compose apps require Docker Engine and the Compose plugin",
+        "python3 deploy.py PanicAtTheConsole",
         "",
         "# Validate apps.yaml",
         "python3 scripts/lint.py",

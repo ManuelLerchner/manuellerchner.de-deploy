@@ -44,12 +44,27 @@ def run_post_deploy(app: dict, deploy_path: Path) -> None:
     run(cmd, cwd=deploy_path)
 
 
+def write_env_file(app: dict, deploy_path: Path) -> Path:
+    env_file = deploy_path / app["env_file"]
+    values = app["env"]
+    env_file.parent.mkdir(parents=True, exist_ok=True)
+    env_file.write_text("\n".join(f"{key}={value}" for key, value in values.items()) + "\n")
+    env_file.chmod(0o600)
+    return env_file
+
+
 def require(*cmds: str) -> None:
     missing = [c for c in cmds if subprocess.run(
         f"command -v {c}", shell=True, capture_output=True
     ).returncode != 0]
     if missing:
         sys.exit(f"Missing tools: {', '.join(missing)} — run scripts/bootstrap.py first")
+
+
+def require_docker_compose() -> None:
+    result = subprocess.run("docker compose version", shell=True, capture_output=True)
+    if result.returncode != 0:
+        sys.exit("Docker Compose plugin missing — install Docker Engine with the Compose plugin")
 
 
 # ── version tracking ──────────────────────────────────────────────────────────
@@ -173,36 +188,66 @@ def deploy_service(app: dict) -> None:
     record_version(name, deploy_path)
 
 
+def deploy_compose(app: dict) -> None:
+    name = app["name"]
+    deploy_path = Path(app["deploy_path"])
+
+    pull_or_clone(app["repo"], deploy_path)
+    env_file = write_env_file(app, deploy_path)
+
+    compose_file = shlex.quote(str(deploy_path / app["compose_file"]))
+    project_dir = shlex.quote(str(deploy_path))
+    project_name = shlex.quote(app["compose_project"])
+    env_file_q = shlex.quote(str(env_file))
+    compose = (
+        f"docker compose --project-name {project_name} --project-directory {project_dir} "
+        f"--env-file {env_file_q} -f {compose_file}"
+    )
+
+    log("pulling Compose images")
+    run(f"{compose} pull")
+    log("starting Compose stack")
+    run(f"{compose} up -d --remove-orphans")
+    log("✓ Compose stack running")
+
+    record_version(name, deploy_path)
+
+
 DEPLOY_FN = {
     "static": deploy_static,
     "service": deploy_service,
+    "compose": deploy_compose,
 }
 
 
 # ── commands ──────────────────────────────────────────────────────────────────
 
 def cmd_deploy(target: str, apps: list[dict]) -> None:
-    require("git", "pm2")
+    require("git")
 
     if target != "all" and not any(a["name"] == target for a in apps):
         sys.exit(f"App '{target}' not found in apps.yaml")
 
     selected = apps if target == "all" else [a for a in apps if a["name"] == target]
+    if any(app["type"] == "service" for app in selected):
+        require("pm2")
+    if any(app["type"] == "compose" for app in selected):
+        require_docker_compose()
     failed: list[str] = []
-    any_static = False
+    any_web_app = False
 
     for app in selected:
         kind = app["type"]
         header(app["name"], kind)
         try:
             DEPLOY_FN[kind](app)
-            if kind == "static":
-                any_static = True
+            if app.get("domain"):
+                any_web_app = True
         except Exception as exc:
             print(f"  [FAILED] {exc}", file=sys.stderr)
             failed.append(app["name"])
 
-    if any_static or target == "all":
+    if any_web_app:
         print("\nReloading Caddy...")
         result = subprocess.run(
             f"sudo caddy reload --config {CADDYFILE}",
@@ -220,13 +265,17 @@ def cmd_deploy(target: str, apps: list[dict]) -> None:
 
 
 def cmd_update(apps: list[dict]) -> None:
-    require("git", "pm2")
+    require("git")
+    if any(app["type"] == "service" for app in apps):
+        require("pm2")
+    if any(app["type"] == "compose" for app in apps):
+        require_docker_compose()
 
     versions = load_versions()
     up_to_date: list[str] = []
     updated: list[str] = []
     failed: list[str] = []
-    any_static_updated = False
+    any_web_app_updated = False
 
     for app in apps:
         name = app["name"]
@@ -240,8 +289,8 @@ def cmd_update(apps: list[dict]) -> None:
             try:
                 DEPLOY_FN[kind](app)
                 updated.append(name)
-                if kind == "static":
-                    any_static_updated = True
+                if app.get("domain"):
+                    any_web_app_updated = True
             except Exception as exc:
                 print(f"  [FAILED] {exc}", file=sys.stderr)
                 failed.append(name)
@@ -271,13 +320,13 @@ def cmd_update(apps: list[dict]) -> None:
         try:
             DEPLOY_FN[kind](app)
             updated.append(name)
-            if kind == "static":
-                any_static_updated = True
+            if app.get("domain"):
+                any_web_app_updated = True
         except Exception as exc:
             print(f"  [FAILED] {exc}", file=sys.stderr)
             failed.append(name)
 
-    if any_static_updated:
+    if any_web_app_updated:
         print("\nReloading Caddy...")
         result = subprocess.run(
             f"sudo caddy reload --config {CADDYFILE}",
