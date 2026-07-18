@@ -174,10 +174,11 @@ apps:
       INVITE_CODE: ""
       NATS_URL: nats://nats:4222
       OLLAMA_URL: http://ollama:11434
-      # 88 MB instruction model: deliberately low quality, but fits the Pi.
-      OLLAMA_MODEL: smollm2:135m-instruct-q3_K_S
+      OLLAMA_MODEL: qwen2.5:0.5b
       LLM_PROVIDER: ollama
       LLM_FALLBACK_ENABLED: "false"
+      # Keep the GenAI process idle: do not consume incident events from NATS.
+      NATS_ENABLED: "false"
       GRAFANA_URL: /grafana
       PROMETHEUS_URL: /prometheus
       GRAFANA_ADMIN_USER: admin
