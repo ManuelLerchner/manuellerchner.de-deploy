@@ -219,6 +219,10 @@ apps:
     post_deploy_cmd: >-
       [ -f config/.env ] || cp /home/pi/DeinServerHost-DynDNS-Handler/config/.env config/.env
 
+maintenance:
+  stop_pm2_processes:
+    - n8n
+
 # ---------------------------------------------------------------------------
 # Redirects — Caddy only, no app managed here
 # ---------------------------------------------------------------------------

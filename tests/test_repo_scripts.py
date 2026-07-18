@@ -38,6 +38,23 @@ def test_static_builds_use_pi_resource_limits_only_during_deploy() -> None:
     )
 
 
+def test_stop_only_targets_managed_service_processes(monkeypatch) -> None:
+    import deploy
+
+    required: list[tuple[str, ...]] = []
+    commands: list[str] = []
+    monkeypatch.setattr(deploy, "require", lambda *cmds: required.append(cmds))
+    monkeypatch.setattr(deploy, "run", lambda cmd, cwd=None: commands.append(cmd))
+
+    deploy.cmd_stop([
+        {"name": "Static", "type": "static"},
+        {"name": "API", "type": "service", "pm2_name": "API"},
+    ], ["n8n"])
+
+    assert required == [("pm2",)]
+    assert commands == ["pm2 stop API || true", "pm2 stop n8n || true"]
+
+
 def test_gen_readme_uses_correct_regeneration_command() -> None:
     result = run_cmd("scripts/gen_readme.py")
     assert result.returncode == 0, result.stdout + result.stderr

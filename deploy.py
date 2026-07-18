@@ -211,23 +211,10 @@ def deploy_service(app: dict) -> None:
 
 def deploy_compose(app: dict) -> None:
     name = app["name"]
+
     deploy_path = Path(app["deploy_path"])
-
     pull_or_clone(app["repo"], deploy_path)
-    env_file = write_env_file(app, deploy_path)
-
-    compose_file = shlex.quote(str(deploy_path / app["compose_file"]))
-    override_files = " ".join(
-        f"-f {shlex.quote(str(DEPLOY_DIR / override))}"
-        for override in app.get("compose_overrides", [])
-    )
-    project_dir = shlex.quote(str(deploy_path))
-    project_name = shlex.quote(app["compose_project"])
-    env_file_q = shlex.quote(str(env_file))
-    compose = (
-        f"docker compose --project-name {project_name} --project-directory {project_dir} "
-        f"--env-file {env_file_q} -f {compose_file} {override_files}"
-    )
+    compose = compose_command(app, write_env_file(app, deploy_path))
 
     log("pulling Compose images")
     run(f"{compose} pull")
@@ -236,6 +223,22 @@ def deploy_compose(app: dict) -> None:
     log("✓ Compose stack running")
 
     record_version(name, deploy_path)
+
+
+def compose_command(app: dict, env_file: Path) -> str:
+    deploy_path = Path(app["deploy_path"])
+    compose_file = shlex.quote(str(deploy_path / app["compose_file"]))
+    override_files = " ".join(
+        f"-f {shlex.quote(str(DEPLOY_DIR / override))}"
+        for override in app.get("compose_overrides", [])
+    )
+    project_dir = shlex.quote(str(deploy_path))
+    project_name = shlex.quote(app["compose_project"])
+    env_file_q = shlex.quote(str(env_file))
+    return (
+        f"docker compose --project-name {project_name} --project-directory {project_dir} "
+        f"--env-file {env_file_q} -f {compose_file} {override_files}"
+    )
 
 
 DEPLOY_FN = {
@@ -378,14 +381,57 @@ def cmd_update(apps: list[dict]) -> None:
         sys.exit(1)
 
 
+def cmd_stop(apps: list[dict], extra_pm2_processes: list[str]) -> None:
+    """Stop application processes managed by this repository without changing boot state."""
+    managed = [app for app in apps if app["type"] in {"service", "compose"}]
+    if any(app["type"] == "service" for app in managed) or extra_pm2_processes:
+        require("pm2")
+    if any(app["type"] == "compose" for app in managed):
+        require_docker_compose()
+
+    failed: list[str] = []
+    for app in managed:
+        header(app["name"], app["type"])
+        try:
+            if app["type"] == "service":
+                pm2_name = shlex.quote(app.get("pm2_name", app["name"]))
+                run(f"pm2 stop {pm2_name} || true")
+            else:
+                deploy_path = Path(app["deploy_path"])
+                env_file = deploy_path / app["env_file"]
+                run(f"{compose_command(app, env_file)} stop")
+            log("✓ stopped")
+        except Exception as exc:
+            print(f"  [FAILED] {exc}", file=sys.stderr)
+            failed.append(app["name"])
+
+    for pm2_name in extra_pm2_processes:
+        header(pm2_name, "pm2")
+        try:
+            run(f"pm2 stop {shlex.quote(pm2_name)} || true")
+            log("✓ stopped")
+        except Exception as exc:
+            print(f"  [FAILED] {exc}", file=sys.stderr)
+            failed.append(pm2_name)
+
+    total = len(managed) + len(extra_pm2_processes)
+    print(f"\nStopped: {total - len(failed)}  Failed: {len(failed)}")
+    if failed:
+        print(f"Failed: {', '.join(failed)}")
+        sys.exit(1)
+
+
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
     config = yaml.safe_load(APPS_YAML.read_text())
     apps: list[dict] = config["apps"]
+    extra_pm2_processes: list[str] = config.get("maintenance", {}).get("stop_pm2_processes", [])
 
     if len(sys.argv) > 1 and sys.argv[1] == "update":
         cmd_update(apps)
+    elif len(sys.argv) > 1 and sys.argv[1] == "stop":
+        cmd_stop(apps, extra_pm2_processes)
     else:
         target = sys.argv[1] if len(sys.argv) > 1 else "all"
         cmd_deploy(target, apps)

@@ -13,6 +13,21 @@
         "$ref": "#/$defs/app"
       }
     },
+    "maintenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "stop_pm2_processes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "default": []
+        }
+      }
+    },
     "redirects": {
       "type": "array",
       "items": {

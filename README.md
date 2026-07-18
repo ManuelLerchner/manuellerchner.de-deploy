@@ -128,6 +128,9 @@ python3 deploy.py all
 # Deploy one app
 python3 deploy.py Website
 
+# Stop managed PM2 and Docker Compose apps (leaves Caddy and networking running)
+python3 deploy.py stop
+
 # Docker Compose apps require Docker Engine and the Compose plugin
 python3 deploy.py PanicAtTheConsole
 
