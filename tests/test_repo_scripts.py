@@ -22,6 +22,21 @@ def test_lint_passes_for_current_config() -> None:
     assert "no errors" in result.stdout.lower()
 
 
+def test_static_builds_use_pi_resource_limits_only_during_deploy() -> None:
+    import deploy
+    import yaml
+
+    config = yaml.safe_load((REPO_ROOT / "apps.yaml").read_text(encoding="utf-8"))
+    app = next(app for app in config["apps"] if app["name"] == "Pathfinder")
+
+    assert app["build"] == "npm ci && npm run build"
+    assert deploy.pi_build_command(app) == (
+        "systemd-run --user --scope -p CPUQuota=200% -p MemoryHigh=2500M "
+        "-p MemoryMax=3G nice -n 15 ionice -c 2 -n 7 "
+        "env NODE_OPTIONS=--max-old-space-size=2304 sh -c 'npm ci && npm run build'"
+    )
+
+
 def test_gen_readme_uses_correct_regeneration_command() -> None:
     result = run_cmd("scripts/gen_readme.py")
     assert result.returncode == 0, result.stdout + result.stderr

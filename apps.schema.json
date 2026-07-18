@@ -81,6 +81,50 @@
         }
       ]
     },
+    "piBuildLimits": {
+      "type": "object",
+      "required": [
+        "cpu_quota",
+        "memory_high",
+        "memory_max",
+        "nice",
+        "ionice_class",
+        "ionice_level",
+        "node_max_old_space_size"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "cpu_quota": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*%$"
+        },
+        "memory_high": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*[KMG]$"
+        },
+        "memory_max": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*[KMG]$"
+        },
+        "nice": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 19
+        },
+        "ionice_class": {
+          "const": 2
+        },
+        "ionice_level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7
+        },
+        "node_max_old_space_size": {
+          "type": "integer",
+          "minimum": 256
+        }
+      }
+    },
     "app": {
       "oneOf": [
         {
@@ -107,6 +151,9 @@
             },
             "build": {
               "$ref": "#/$defs/maybeNullString"
+            },
+            "pi_build_limits": {
+              "$ref": "#/$defs/piBuildLimits"
             },
             "type": {
               "const": "static"

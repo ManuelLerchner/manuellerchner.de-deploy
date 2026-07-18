@@ -36,6 +36,25 @@ def run(cmd: str, cwd: Optional[Path] = None) -> None:
         raise RuntimeError(f"Command failed (exit {result.returncode}): {cmd}")
 
 
+def pi_build_command(app: dict) -> Optional[str]:
+    """Return the Pi-specific build command, preserving the CI command unchanged."""
+    build = app.get("build")
+    limits = app.get("pi_build_limits")
+    if not build or not limits:
+        return build
+
+    return " ".join([
+        "systemd-run", "--user", "--scope",
+        "-p", shlex.quote(f"CPUQuota={limits['cpu_quota']}"),
+        "-p", shlex.quote(f"MemoryHigh={limits['memory_high']}"),
+        "-p", shlex.quote(f"MemoryMax={limits['memory_max']}"),
+        "nice", "-n", str(limits["nice"]),
+        "ionice", "-c", str(limits["ionice_class"]), "-n", str(limits["ionice_level"]),
+        "env", shlex.quote(f"NODE_OPTIONS=--max-old-space-size={limits['node_max_old_space_size']}"),
+        "sh", "-c", shlex.quote(build),
+    ])
+
+
 def run_post_deploy(app: dict, deploy_path: Path) -> None:
     cmd = app.get("post_deploy_cmd")
     if not cmd:
@@ -136,7 +155,7 @@ def deploy_static(app: dict) -> None:
     name = app["name"]
     deploy_path = Path(app["deploy_path"])
     output = app.get("output", ".")
-    build = app.get("build")
+    build = pi_build_command(app)
 
     pull_or_clone(app["repo"], deploy_path)
 
@@ -233,6 +252,8 @@ def cmd_deploy(target: str, apps: list[dict]) -> None:
         sys.exit(f"App '{target}' not found in apps.yaml")
 
     selected = apps if target == "all" else [a for a in apps if a["name"] == target]
+    if any(app.get("pi_build_limits") for app in selected):
+        require("systemd-run", "ionice")
     if any(app["type"] == "service" for app in selected):
         require("pm2")
     if any(app["type"] == "compose" for app in selected):

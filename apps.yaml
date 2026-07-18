@@ -14,7 +14,15 @@ apps:
 
   - name: Pathfinder
     repo: https://github.com/ManuelLerchner/Pathfinder-Website.git
-    build: npm ci && nice -n 19 npm run build
+    build: npm ci && npm run build
+    pi_build_limits: &constrained_node_build
+      cpu_quota: 200%
+      memory_high: 2500M
+      memory_max: 3G
+      nice: 15
+      ionice_class: 2
+      ionice_level: 7
+      node_max_old_space_size: 2304
     type: static
     output: build
     domain: pathfinder.manuellerchner.de
@@ -32,7 +40,8 @@ apps:
 
   - name: Monopoly
     repo: https://github.com/ManuelLerchner/Monopoly-Smart-Bank.git
-    build: npm ci && nice -n 19 npm run build
+    build: npm ci && npm run build
+    pi_build_limits: *constrained_node_build
     type: static
     output: build
     domain: monopoly.manuellerchner.de
@@ -43,7 +52,8 @@ apps:
 
   - name: MinecraftBot
     repo: https://github.com/ManuelLerchner/Minecraft-Bot-Website.git
-    build: npm ci && nice -n 19 npm run build
+    build: npm ci && npm run build
+    pi_build_limits: *constrained_node_build
     type: static
     output: dist/Minecraft-Bot
     domain: minecraft-bot.manuellerchner.de
@@ -52,7 +62,8 @@ apps:
 
   - name: TaskPlanner
     repo: https://github.com/ManuelLerchner/Task-Planner.git
-    build: npm ci && nice -n 19 npm run build
+    build: npm ci && npm run build
+    pi_build_limits: *constrained_node_build
     type: static
     output: dist/Task-Planner
     domain: taskplanner.manuellerchner.de
@@ -61,7 +72,8 @@ apps:
 
   - name: MockTrading
     repo: https://github.com/ManuelLerchner/Mock-Trading.git
-    build: npm ci && nice -n 19 npm run build
+    build: npm ci && npm run build
+    pi_build_limits: *constrained_node_build
     type: static
     output: dist/Mock-Trading
     domain: mocktrading.manuellerchner.de
@@ -70,7 +82,8 @@ apps:
 
   - name: ExpenseTracker
     repo: https://github.com/ManuelLerchner/Expense-Tracker.git
-    build: npm ci && nice -n 19 npm run build
+    build: npm ci && npm run build
+    pi_build_limits: *constrained_node_build
     type: static
     output: dist/Expense-Tracker
     domain: expensetracker.manuellerchner.de
@@ -79,7 +92,8 @@ apps:
 
   - name: TilePlanner
     repo: https://github.com/ManuelLerchner/tile-planner.git
-    build: npm ci && nice -n 19 npm run build
+    build: npm ci && npm run build
+    pi_build_limits: *constrained_node_build
     type: static
     output: build
     domain: tile-planner.manuellerchner.de
@@ -90,7 +104,8 @@ apps:
 
   - name: AlgoExplorer
     repo: https://github.com/ManuelLerchner/algorithm-explorer.git
-    build: npm ci && nice -n 19 npm run build
+    build: npm ci && npm run build
+    pi_build_limits: *constrained_node_build
     type: static
     output: build
     domain: algoexplorer.manuellerchner.de

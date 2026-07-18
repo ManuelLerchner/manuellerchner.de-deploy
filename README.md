@@ -58,15 +58,31 @@ Compose environment values can be stored in `apps.yaml`; only use that for publi
 | App | Domain | Build |
 |-----|--------|-------|
 | **Website** | [manuellerchner.de](https://manuellerchner.de) | *(none — pure static)* |
-| **Pathfinder** | [pathfinder.manuellerchner.de](https://pathfinder.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
+| **Pathfinder** | [pathfinder.manuellerchner.de](https://pathfinder.manuellerchner.de) | `npm ci && npm run build` |
 | **LambdaCalculus** | [lambdacalculus.manuellerchner.de](https://lambdacalculus.manuellerchner.de) | *(none — pure static)* |
-| **Monopoly** | [monopoly.manuellerchner.de](https://monopoly.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
-| **MinecraftBot** | [minecraft-bot.manuellerchner.de](https://minecraft-bot.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
-| **TaskPlanner** | [taskplanner.manuellerchner.de](https://taskplanner.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
-| **MockTrading** | [mocktrading.manuellerchner.de](https://mocktrading.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
-| **ExpenseTracker** | [expensetracker.manuellerchner.de](https://expensetracker.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
-| **TilePlanner** | [tile-planner.manuellerchner.de](https://tile-planner.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
-| **AlgoExplorer** | [algoexplorer.manuellerchner.de](https://algoexplorer.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
+| **Monopoly** | [monopoly.manuellerchner.de](https://monopoly.manuellerchner.de) | `npm ci && npm run build` |
+| **MinecraftBot** | [minecraft-bot.manuellerchner.de](https://minecraft-bot.manuellerchner.de) | `npm ci && npm run build` |
+| **TaskPlanner** | [taskplanner.manuellerchner.de](https://taskplanner.manuellerchner.de) | `npm ci && npm run build` |
+| **MockTrading** | [mocktrading.manuellerchner.de](https://mocktrading.manuellerchner.de) | `npm ci && npm run build` |
+| **ExpenseTracker** | [expensetracker.manuellerchner.de](https://expensetracker.manuellerchner.de) | `npm ci && npm run build` |
+| **TilePlanner** | [tile-planner.manuellerchner.de](https://tile-planner.manuellerchner.de) | `npm ci && npm run build` |
+| **AlgoExplorer** | [algoexplorer.manuellerchner.de](https://algoexplorer.manuellerchner.de) | `npm ci && npm run build` |
+
+## Pi Build Limits
+
+`deploy.py` runs configured static builds in a user systemd scope. GitHub Actions runs the portable build command above without these limits.
+For unattended deployments, enable the Pi user's systemd manager once: `sudo loginctl enable-linger pi`.
+
+| App | CPU quota | Memory high/max | Node heap | Nice | I/O priority |
+|-----|-----------|-----------------|-----------|------|--------------|
+| **Pathfinder** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
+| **Monopoly** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
+| **MinecraftBot** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
+| **TaskPlanner** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
+| **MockTrading** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
+| **ExpenseTracker** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
+| **TilePlanner** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
+| **AlgoExplorer** | `200%` | `2500M` / `3G` | `2304 MiB` | `15` | class `2`, level `7` |
 
 ## Backend Services (PM2)
 
