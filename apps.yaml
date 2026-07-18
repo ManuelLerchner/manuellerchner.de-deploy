@@ -165,10 +165,10 @@ apps:
       H2 stores data under src/main/resources/ (see jdbc URL in application.properties), not the repo root.
       Copy from ~/RestaurantApp/restaurantDatabase.h2.mv.db if missing or stale after deploy.
     post_deploy_cmd: >-
-      mkdir -p src/main/resources &&
-      B=/home/pi/RestaurantApp/restaurantDatabase.h2.mv.db &&
-      T=src/main/resources/restaurantDatabase.h2.mv.db &&
-      [ -f "$B" ] && { [ ! -f "$T" ] || [ "$(stat -c%s "$B")" -gt "$(stat -c%s "$T")" ]; } && cp "$B" "$T"
+      mkdir -p src/main/resources || exit $?;
+      B=/home/pi/RestaurantApp/restaurantDatabase.h2.mv.db;
+      T=src/main/resources/restaurantDatabase.h2.mv.db;
+      if [ -f "$B" ] && { [ ! -f "$T" ] || [ "$(stat -c%s "$B")" -gt "$(stat -c%s "$T")" ]; }; then cp "$B" "$T"; fi
 
   # ---------------------------------------------------------------------------
   # Docker Compose services — Caddy reverse-proxies the Compose edge service

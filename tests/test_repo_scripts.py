@@ -122,6 +122,25 @@ def test_legacy_deploy_targets_are_rejected(monkeypatch) -> None:
         raise AssertionError("legacy deploy target was accepted")
 
 
+def test_restaurant_post_deploy_succeeds_without_backup_database(tmp_path) -> None:
+    import yaml
+
+    config = yaml.safe_load((REPO_ROOT / "apps.yaml").read_text(encoding="utf-8"))
+    app = next(app for app in config["apps"] if app["name"] == "RestaurantApp")
+
+    result = subprocess.run(
+        app["post_deploy_cmd"],
+        shell=True,
+        cwd=tmp_path,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (tmp_path / "src/main/resources").is_dir()
+
+
 def test_gen_readme_uses_correct_regeneration_command() -> None:
     result = run_cmd("scripts/gen_readme.py")
     assert result.returncode == 0, result.stdout + result.stderr
