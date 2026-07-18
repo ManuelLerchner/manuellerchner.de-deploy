@@ -58,15 +58,15 @@ Compose environment values can be stored in `apps.yaml`; only use that for publi
 | App | Domain | Build |
 |-----|--------|-------|
 | **Website** | [manuellerchner.de](https://manuellerchner.de) | *(none — pure static)* |
-| **Pathfinder** | [pathfinder.manuellerchner.de](https://pathfinder.manuellerchner.de) | `npm install && npm run build` |
+| **Pathfinder** | [pathfinder.manuellerchner.de](https://pathfinder.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
 | **LambdaCalculus** | [lambdacalculus.manuellerchner.de](https://lambdacalculus.manuellerchner.de) | *(none — pure static)* |
-| **Monopoly** | [monopoly.manuellerchner.de](https://monopoly.manuellerchner.de) | `npm install && npm run build` |
-| **MinecraftBot** | [minecraft-bot.manuellerchner.de](https://minecraft-bot.manuellerchner.de) | `npm install && npm run build` |
-| **TaskPlanner** | [taskplanner.manuellerchner.de](https://taskplanner.manuellerchner.de) | `npm install && npm run build` |
-| **MockTrading** | [mocktrading.manuellerchner.de](https://mocktrading.manuellerchner.de) | `npm install && npm run build` |
-| **ExpenseTracker** | [expensetracker.manuellerchner.de](https://expensetracker.manuellerchner.de) | `npm install && npm run build` |
-| **TilePlanner** | [tile-planner.manuellerchner.de](https://tile-planner.manuellerchner.de) | `npm install && npm run build` |
-| **AlgoExplorer** | [algoexplorer.manuellerchner.de](https://algoexplorer.manuellerchner.de) | `npm install && npm run build` |
+| **Monopoly** | [monopoly.manuellerchner.de](https://monopoly.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
+| **MinecraftBot** | [minecraft-bot.manuellerchner.de](https://minecraft-bot.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
+| **TaskPlanner** | [taskplanner.manuellerchner.de](https://taskplanner.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
+| **MockTrading** | [mocktrading.manuellerchner.de](https://mocktrading.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
+| **ExpenseTracker** | [expensetracker.manuellerchner.de](https://expensetracker.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
+| **TilePlanner** | [tile-planner.manuellerchner.de](https://tile-planner.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
+| **AlgoExplorer** | [algoexplorer.manuellerchner.de](https://algoexplorer.manuellerchner.de) | `npm ci && nice -n 19 npm run build` |
 
 ## Backend Services (PM2)
 
