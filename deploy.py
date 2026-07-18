@@ -196,12 +196,16 @@ def deploy_compose(app: dict) -> None:
     env_file = write_env_file(app, deploy_path)
 
     compose_file = shlex.quote(str(deploy_path / app["compose_file"]))
+    override_files = " ".join(
+        f"-f {shlex.quote(str(DEPLOY_DIR / override))}"
+        for override in app.get("compose_overrides", [])
+    )
     project_dir = shlex.quote(str(deploy_path))
     project_name = shlex.quote(app["compose_project"])
     env_file_q = shlex.quote(str(env_file))
     compose = (
         f"docker compose --project-name {project_name} --project-directory {project_dir} "
-        f"--env-file {env_file_q} -f {compose_file}"
+        f"--env-file {env_file_q} -f {compose_file} {override_files}"
     )
 
     log("pulling Compose images")

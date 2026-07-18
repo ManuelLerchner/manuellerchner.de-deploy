@@ -161,6 +161,8 @@ apps:
     port: 8080
     deploy_path: /srv/apps/PanicAtTheConsole
     compose_file: infra/compose/docker-compose.yml
+    compose_overrides:
+      - compose-overrides/panic-at-the-console.yml
     compose_project: panic-at-the-console
     env_file: .env
     env_note: Public deployment configuration managed in apps.yaml; Ollama only.

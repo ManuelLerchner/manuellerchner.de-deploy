@@ -78,9 +78,9 @@ Compose environment values can be stored in `apps.yaml`; only use that for publi
 
 ## Docker Compose Services
 
-| App | Domain | Port | Compose project |
-|-----|--------|------|-----------------|
-| **PanicAtTheConsole** | [panic.manuellerchner.de](https://panic.manuellerchner.de) | `8080` | `panic-at-the-console` |
+| App | Domain | Port | Compose project | Overrides |
+|-----|--------|------|-----------------|-----------|
+| **PanicAtTheConsole** | [panic.manuellerchner.de](https://panic.manuellerchner.de) | `8080` | `panic-at-the-console` | `compose-overrides/panic-at-the-console.yml` |
 
 ## Background Services (PM2, no domain)
 

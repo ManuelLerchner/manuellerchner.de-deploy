@@ -137,13 +137,14 @@ BADGE,
             "",
             "## Docker Compose Services",
             "",
-            "| App | Domain | Port | Compose project |",
-            "|-----|--------|------|-----------------|",
+            "| App | Domain | Port | Compose project | Overrides |",
+            "|-----|--------|------|-----------------|-----------|",
         ]
         for a in compose_apps:
             lines.append(
                 f"| **{a['name']}** | {domain_link(a.get('domain'))} | "
-                f"`{a['port']}` | `{a['compose_project']}` |"
+                f"`{a['port']}` | `{a['compose_project']}` | "
+                f"{cell(', '.join(a.get('compose_overrides', [])))} |"
             )
 
     if bg_services:

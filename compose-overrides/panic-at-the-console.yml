@@ -1,0 +1,30 @@
+# The student stack exposes development ports for every service. On the Pi, Caddy
+# is the only public entry point, so bind only the edge proxy to loopback.
+services:
+  postgres:
+    ports: !override []
+  nats:
+    ports: !override []
+  ollama:
+    ports: !override []
+  frontend:
+    ports: !override []
+  incident-service:
+    ports: !override []
+  event-service:
+    ports: !override []
+  user-service:
+    ports: !override []
+  notification-service:
+    ports: !override []
+  webhook-service:
+    ports: !override []
+  genai-service:
+    ports: !override []
+  prometheus:
+    ports: !override []
+  grafana:
+    ports: !override []
+  edge:
+    ports: !override
+      - "127.0.0.1:8080:8080"

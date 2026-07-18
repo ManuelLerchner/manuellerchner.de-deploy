@@ -50,3 +50,5 @@ def test_panic_compose_config_uses_ollama_only() -> None:
     assert app["env"]["LLM_PROVIDER"] == "ollama"
     assert app["env"]["LLM_FALLBACK_ENABLED"] == "false"
     assert not any(key.startswith("LOGOS_") for key in app["env"])
+    assert app["compose_overrides"] == ["compose-overrides/panic-at-the-console.yml"]
+    assert (REPO_ROOT / app["compose_overrides"][0]).is_file()

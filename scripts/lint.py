@@ -88,6 +88,15 @@ def check_service_has_entry_or_cmd(app: dict) -> None:
         err(f"[{app['name']}] service needs either 'entry' or 'start_cmd'")
 
 
+def check_compose_overrides(app: dict) -> None:
+    if app["type"] != "compose":
+        return
+    for override in app.get("compose_overrides", []):
+        path = APPS_YAML.parent / override
+        if not path.is_file():
+            err(f"[{app['name']}] compose override not found: {override}")
+
+
 def check_no_build_but_output(app: dict) -> None:
     if app["type"] != "static":
         return
@@ -123,6 +132,7 @@ def main() -> None:
             continue
         check_required_fields(app)
         check_service_has_entry_or_cmd(app)
+        check_compose_overrides(app)
         check_no_build_but_output(app)
 
     check_duplicates(apps)
