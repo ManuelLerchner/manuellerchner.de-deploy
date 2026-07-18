@@ -38,7 +38,7 @@ def test_gen_caddyfile_contains_expected_domains() -> None:
     assert "manuellerchner.de {" in caddyfile
     assert "api.manuellerchner.de {" in caddyfile
     assert "panic.manuellerchner.de {" in caddyfile
-    assert "reverse_proxy localhost:8080" in caddyfile
+    assert "reverse_proxy localhost:18080" in caddyfile
 
 
 def test_panic_compose_config_uses_ollama_only() -> None:
