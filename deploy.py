@@ -153,40 +153,34 @@ def pull_or_clone(repo: str, path: Path) -> None:
 
 # ── deploy types ──────────────────────────────────────────────────────────────
 
-def deploy_static(app: dict) -> None:
-    name = app["name"]
+def pull_and_build(app: dict) -> Path:
     deploy_path = Path(app["deploy_path"])
-    output = app.get("output", ".")
-    build = pi_build_command(app)
-
     pull_or_clone(app["repo"], deploy_path)
 
+    build = pi_build_command(app)
     if build:
         log(f"building: {build}")
         run(build, cwd=deploy_path)
 
-    run_post_deploy(app, deploy_path)
+    return deploy_path
 
-    served_path = deploy_path / output
+
+def start_static(app: dict, deploy_path: Path) -> None:
+    run_post_deploy(app, deploy_path)
+    served_path = deploy_path / app.get("output", ".")
     run(f"chmod -R g+rX {served_path}")
     log(f"✓ serving from {served_path}")
+    record_version(app["name"], deploy_path)
 
-    record_version(name, deploy_path)
+
+def deploy_static(app: dict) -> None:
+    start_static(app, pull_and_build(app))
 
 
-def deploy_service(app: dict) -> None:
-    name = app["name"]
-    deploy_path = Path(app["deploy_path"])
-    pm2_name = app.get("pm2_name", name)
-    build = app.get("build")
+def start_service(app: dict, deploy_path: Path) -> None:
+    pm2_name = app.get("pm2_name", app["name"])
     entry = app.get("entry")
     start_cmd = app.get("start_cmd")
-
-    pull_or_clone(app["repo"], deploy_path)
-
-    if build:
-        log(f"building: {build}")
-        run(build, cwd=deploy_path)
 
     run_post_deploy(app, deploy_path)
 
@@ -205,24 +199,30 @@ def deploy_service(app: dict) -> None:
 
     run("pm2 save --force")
     log("✓ service running")
+    record_version(app["name"], deploy_path)
 
-    record_version(name, deploy_path)
+
+def deploy_service(app: dict) -> None:
+    start_service(app, pull_and_build(app))
 
 
 def deploy_compose(app: dict) -> None:
-    name = app["name"]
-
     deploy_path = Path(app["deploy_path"])
     pull_or_clone(app["repo"], deploy_path)
     compose = compose_command(app, write_env_file(app, deploy_path))
-
     log("pulling Compose images")
     run(f"{compose} pull")
+    start_compose(app, deploy_path)
+
+
+def start_compose(app: dict, deploy_path: Path) -> None:
+    compose = compose_command(app, write_env_file(app, deploy_path))
+
     log("starting Compose stack")
     run(f"{compose} up -d --remove-orphans")
     log("✓ Compose stack running")
 
-    record_version(name, deploy_path)
+    record_version(app["name"], deploy_path)
 
 
 def compose_command(app: dict, env_file: Path) -> str:
@@ -421,6 +421,73 @@ def cmd_stop(apps: list[dict], extra_pm2_processes: list[str]) -> None:
         sys.exit(1)
 
 
+def cmd_build(apps: list[dict]) -> None:
+    """Pull and build every app without starting application processes."""
+    require("git")
+    if any(app.get("pi_build_limits") for app in apps):
+        require("systemd-run", "ionice")
+    if any(app["type"] == "compose" for app in apps):
+        require_docker_compose()
+
+    failed: list[str] = []
+    for app in apps:
+        header(app["name"], app["type"])
+        try:
+            deploy_path = pull_and_build(app)
+            if app["type"] == "compose":
+                compose = compose_command(app, write_env_file(app, deploy_path))
+                log("pulling Compose images")
+                run(f"{compose} pull")
+            log("✓ built")
+        except Exception as exc:
+            print(f"  [FAILED] {exc}", file=sys.stderr)
+            failed.append(app["name"])
+
+    print(f"\nBuilt: {len(apps) - len(failed)}  Failed: {len(failed)}")
+    if failed:
+        print(f"Failed: {', '.join(failed)}")
+        sys.exit(1)
+
+
+def cmd_start(apps: list[dict], extra_pm2_processes: list[str]) -> None:
+    """Start apps after a separate build phase, in apps.yaml order."""
+    if any(app["type"] == "service" for app in apps) or extra_pm2_processes:
+        require("pm2")
+    if any(app["type"] == "compose" for app in apps):
+        require_docker_compose()
+
+    failed: list[str] = []
+    for app in apps:
+        header(app["name"], app["type"])
+        deploy_path = Path(app["deploy_path"])
+        try:
+            if app["type"] == "static":
+                start_static(app, deploy_path)
+            elif app["type"] == "service":
+                start_service(app, deploy_path)
+            else:
+                start_compose(app, deploy_path)
+        except Exception as exc:
+            print(f"  [FAILED] {exc}", file=sys.stderr)
+            failed.append(app["name"])
+
+    for pm2_name in extra_pm2_processes:
+        header(pm2_name, "pm2")
+        try:
+            run(f"pm2 start {shlex.quote(pm2_name)}")
+            run("pm2 save --force")
+            log("✓ service running")
+        except Exception as exc:
+            print(f"  [FAILED] {exc}", file=sys.stderr)
+            failed.append(pm2_name)
+
+    total = len(apps) + len(extra_pm2_processes)
+    print(f"\nStarted: {total - len(failed)}  Failed: {len(failed)}")
+    if failed:
+        print(f"Failed: {', '.join(failed)}")
+        sys.exit(1)
+
+
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -432,6 +499,10 @@ def main() -> None:
         cmd_update(apps)
     elif len(sys.argv) > 1 and sys.argv[1] == "stop":
         cmd_stop(apps, extra_pm2_processes)
+    elif len(sys.argv) > 1 and sys.argv[1] == "build":
+        cmd_build(apps)
+    elif len(sys.argv) > 1 and sys.argv[1] == "start":
+        cmd_start(apps, extra_pm2_processes)
     else:
         target = sys.argv[1] if len(sys.argv) > 1 else "all"
         cmd_deploy(target, apps)

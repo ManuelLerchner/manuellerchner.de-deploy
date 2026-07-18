@@ -131,6 +131,10 @@ python3 deploy.py Website
 # Stop managed PM2 and Docker Compose apps (leaves Caddy and networking running)
 python3 deploy.py stop
 
+# Pull and build every app without starting services, then start them in apps.yaml order
+python3 deploy.py build
+python3 deploy.py start
+
 # Docker Compose apps require Docker Engine and the Compose plugin
 python3 deploy.py PanicAtTheConsole
 
