@@ -174,7 +174,8 @@ apps:
       INVITE_CODE: ""
       NATS_URL: nats://nats:4222
       OLLAMA_URL: http://ollama:11434
-      OLLAMA_MODEL: qwen2.5:0.5b
+      # 88 MB instruction model: deliberately low quality, but fits the Pi.
+      OLLAMA_MODEL: smollm2:135m-instruct-q3_K_S
       LLM_PROVIDER: ollama
       LLM_FALLBACK_ENABLED: "false"
       GRAFANA_URL: /grafana
