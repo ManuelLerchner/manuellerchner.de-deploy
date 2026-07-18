@@ -95,7 +95,7 @@ restaurantapp.manuellerchner.de {
 }
 
 panic.manuellerchner.de {
-	reverse_proxy localhost:8080
+	reverse_proxy localhost:18080
 	encode gzip
 }
 

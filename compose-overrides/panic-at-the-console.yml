@@ -9,16 +9,29 @@ services:
     ports: !override []
   frontend:
     ports: !override []
+  gateway:
+    healthcheck:
+      start_period: 5m
   incident-service:
     ports: !override []
+    healthcheck:
+      start_period: 5m
   event-service:
     ports: !override []
+    healthcheck:
+      start_period: 5m
   user-service:
     ports: !override []
+    healthcheck:
+      start_period: 5m
   notification-service:
     ports: !override []
+    healthcheck:
+      start_period: 5m
   webhook-service:
     ports: !override []
+    healthcheck:
+      start_period: 5m
   genai-service:
     ports: !override []
   prometheus:
@@ -27,4 +40,4 @@ services:
     ports: !override []
   edge:
     ports: !override
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:18080:8080"

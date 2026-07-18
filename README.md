@@ -80,7 +80,7 @@ Compose environment values can be stored in `apps.yaml`; only use that for publi
 
 | App | Domain | Port | Compose project | Overrides |
 |-----|--------|------|-----------------|-----------|
-| **PanicAtTheConsole** | [panic.manuellerchner.de](https://panic.manuellerchner.de) | `8080` | `panic-at-the-console` | `compose-overrides/panic-at-the-console.yml` |
+| **PanicAtTheConsole** | [panic.manuellerchner.de](https://panic.manuellerchner.de) | `18080` | `panic-at-the-console` | `compose-overrides/panic-at-the-console.yml` |
 
 ## Background Services (PM2, no domain)
 
