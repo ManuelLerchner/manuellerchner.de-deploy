@@ -70,19 +70,23 @@ Compose environment values can be stored in `apps.yaml`; only use that for publi
 
 ## Pi Build Limits
 
-`deploy.py` runs configured static builds in a user systemd scope. GitHub Actions runs the portable build command above without these limits.
+`deploy.py build` runs configured builds in a user systemd scope. GitHub Actions runs the portable build command above without these limits.
 For unattended deployments, enable the Pi user's systemd manager once: `sudo loginctl enable-linger pi`.
 
-| App | CPU quota | Memory high/max | Node heap | Nice | I/O priority | Install output |
-|-----|-----------|-----------------|-----------|------|--------------|----------------|
-| **Pathfinder** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
-| **Monopoly** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
-| **MinecraftBot** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
-| **TaskPlanner** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
-| **MockTrading** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
-| **ExpenseTracker** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
-| **TilePlanner** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
-| **AlgoExplorer** | `200%` | `2500M` / `3G` | `2304 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| App | CPU quota | Memory high/max/swap | Node heap | Nice | I/O priority | Install output |
+|-----|-----------|----------------------|-----------|------|--------------|----------------|
+| **Pathfinder** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **Monopoly** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **MinecraftBot** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **TaskPlanner** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **MockTrading** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **ExpenseTracker** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **TilePlanner** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **AlgoExplorer** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **PiController** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **Backend** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **RestaurantApp** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
+| **DYNDNS** | `200%` | `1200M` / `1500M` / `0` | `1024 MiB` | `10` | class `2`, level `5` | `--foreground-scripts --no-progress` |
 
 ## Backend Services (PM2)
 
@@ -122,21 +126,12 @@ For unattended deployments, enable the Pi user's systemd manager once: `sudo log
 # One-time Pi setup
 python3 scripts/bootstrap.py
 
-# Deploy everything
-python3 deploy.py all
-
-# Deploy one app
-python3 deploy.py Website
-
 # Stop managed PM2 and Docker Compose apps (leaves Caddy and networking running)
 python3 deploy.py stop
 
 # Pull and build every app without starting services, then start them in apps.yaml order
 python3 deploy.py build
 python3 deploy.py start
-
-# Docker Compose apps require Docker Engine and the Compose plugin
-python3 deploy.py PanicAtTheConsole
 
 # Validate apps.yaml
 python3 scripts/lint.py
@@ -150,17 +145,3 @@ python3 scripts/gen_caddyfile.py
 # Regenerate Readme
 python3 scripts/gen_readme.py
 ```
-
-## Rollback
-
-If a deploy introduces problems, reset an app repo to a known good commit and redeploy that app:
-
-```bash
-cd /srv/apps/<AppName>
-git fetch --all
-git reset --hard <known_good_sha>
-cd /srv/deploy
-python3 deploy.py <AppName>
-```
-
-Use `.deployed-versions.json` in this repo to find previously deployed SHAs.

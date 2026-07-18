@@ -102,6 +102,7 @@
         "cpu_quota",
         "memory_high",
         "memory_max",
+        "memory_swap_max",
         "nice",
         "ionice_class",
         "ionice_level",
@@ -121,6 +122,9 @@
         "memory_max": {
           "type": "string",
           "pattern": "^[1-9][0-9]*[KMG]$"
+        },
+        "memory_swap_max": {
+          "const": 0
         },
         "nice": {
           "type": "integer",
@@ -237,6 +241,9 @@
             },
             "build": {
               "$ref": "#/$defs/maybeNullString"
+            },
+            "pi_build_limits": {
+              "$ref": "#/$defs/piBuildLimits"
             },
             "type": {
               "const": "service"

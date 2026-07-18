@@ -17,12 +17,13 @@ apps:
     build: npm ci && npm run build
     pi_build_limits: &constrained_node_build
       cpu_quota: 200%
-      memory_high: 2500M
-      memory_max: 3G
+      memory_high: 1200M
+      memory_max: 1500M
+      memory_swap_max: 0
       nice: 10
       ionice_class: 2
       ionice_level: 5
-      node_max_old_space_size: 2304
+      node_max_old_space_size: 1024
       npm_ci_foreground_scripts: true
     type: static
     output: build
@@ -120,6 +121,7 @@ apps:
   - name: PiController
     repo: https://github.com/ManuelLerchner/Pi-Controller-Website.git
     build: npm ci
+    pi_build_limits: *constrained_node_build
     type: service
     entry: app.js
     port: 3000
@@ -134,6 +136,7 @@ apps:
   - name: Backend
     repo: https://github.com/ManuelLerchner/Manuel-Lerchner-Backend-Server.git
     build: npm ci
+    pi_build_limits: *constrained_node_build
     type: service
     entry: app.js
     port: 4000
@@ -148,6 +151,7 @@ apps:
   - name: RestaurantApp
     repo: https://github.com/ManuelLerchner/RestaurantApp.git
     build: ./gradlew bootJar --no-daemon
+    pi_build_limits: *constrained_node_build
     type: service
     # Spring Boot JAR — not a Node app, PM2 runs it via java
     start_cmd: java -jar build/libs/EIST22t02-Four0Four-1.0.0.jar
@@ -208,6 +212,7 @@ apps:
   - name: DYNDNS
     repo: https://github.com/ManuelLerchner/DeinServerHost-DynDNS-Handler.git
     build: npm ci
+    pi_build_limits: *constrained_node_build
     type: service
     entry: app.js
     port: null # no web-facing port

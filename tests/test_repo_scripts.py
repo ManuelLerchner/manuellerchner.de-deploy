@@ -31,9 +31,9 @@ def test_static_builds_use_pi_resource_limits_only_during_deploy() -> None:
 
     assert app["build"] == "npm ci && npm run build"
     assert deploy.pi_build_command(app) == (
-        "systemd-run --user --scope -p CPUQuota=200% -p MemoryHigh=2500M "
-        "-p MemoryMax=3G nice -n 10 ionice -c 2 -n 5 "
-        "env NODE_OPTIONS=--max-old-space-size=2304 "
+        "systemd-run --user --scope -p CPUQuota=200% -p MemoryHigh=1200M "
+        "-p MemoryMax=1500M -p MemorySwapMax=0 nice -n 10 ionice -c 2 -n 5 "
+        "env NODE_OPTIONS=--max-old-space-size=1024 "
         "sh -c 'npm ci --foreground-scripts --no-progress && npm run build'"
     )
 
@@ -108,6 +108,18 @@ def test_start_uses_apps_yaml_order_then_extra_pm2_processes(monkeypatch) -> Non
     assert started == [
         "Static", "API", "Stack", "pm2 start n8n", "pm2 save --force",
     ]
+
+
+def test_legacy_deploy_targets_are_rejected(monkeypatch) -> None:
+    import deploy
+
+    monkeypatch.setattr(sys, "argv", ["deploy.py", "all"])
+    try:
+        deploy.main()
+    except SystemExit as exc:
+        assert str(exc) == "Usage: python3 deploy.py {stop|build|start}"
+    else:
+        raise AssertionError("legacy deploy target was accepted")
 
 
 def test_gen_readme_uses_correct_regeneration_command() -> None:

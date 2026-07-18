@@ -120,19 +120,19 @@ BADGE,
         build = f"`{a['build']}`" if a.get("build") else "*(none — pure static)*"
         lines.append(f"| **{a['name']}** | {domain_link(a.get('domain'))} | {build} |")
 
-    limited_static_apps = [a for a in static_apps if a.get("pi_build_limits")]
-    if limited_static_apps:
+    limited_apps = [a for a in apps if a.get("pi_build_limits")]
+    if limited_apps:
         lines += [
             "",
             "## Pi Build Limits",
             "",
-            "`deploy.py` runs configured static builds in a user systemd scope. GitHub Actions runs the portable build command above without these limits.",
+            "`deploy.py build` runs configured builds in a user systemd scope. GitHub Actions runs the portable build command above without these limits.",
             "For unattended deployments, enable the Pi user's systemd manager once: `sudo loginctl enable-linger pi`.",
             "",
-            "| App | CPU quota | Memory high/max | Node heap | Nice | I/O priority | Install output |",
-            "|-----|-----------|-----------------|-----------|------|--------------|----------------|",
+            "| App | CPU quota | Memory high/max/swap | Node heap | Nice | I/O priority | Install output |",
+            "|-----|-----------|----------------------|-----------|------|--------------|----------------|",
         ]
-        for a in limited_static_apps:
+        for a in limited_apps:
             limits = a["pi_build_limits"]
             install_output = (
                 "`--foreground-scripts --no-progress`"
@@ -141,7 +141,7 @@ BADGE,
             )
             lines.append(
                 f"| **{a['name']}** | `{limits['cpu_quota']}` | "
-                f"`{limits['memory_high']}` / `{limits['memory_max']}` | "
+                f"`{limits['memory_high']}` / `{limits['memory_max']}` / `{limits['memory_swap_max']}` | "
                 f"`{limits['node_max_old_space_size']} MiB` | `{limits['nice']}` | "
                 f"class `{limits['ionice_class']}`, level `{limits['ionice_level']}` | "
                 f"{install_output} |"
@@ -215,21 +215,12 @@ BADGE,
         "# One-time Pi setup",
         "python3 scripts/bootstrap.py",
         "",
-        "# Deploy everything",
-        "python3 deploy.py all",
-        "",
-        "# Deploy one app",
-        "python3 deploy.py Website",
-        "",
         "# Stop managed PM2 and Docker Compose apps (leaves Caddy and networking running)",
         "python3 deploy.py stop",
         "",
         "# Pull and build every app without starting services, then start them in apps.yaml order",
         "python3 deploy.py build",
         "python3 deploy.py start",
-        "",
-        "# Docker Compose apps require Docker Engine and the Compose plugin",
-        "python3 deploy.py PanicAtTheConsole",
         "",
         "# Validate apps.yaml",
         "python3 scripts/lint.py",
@@ -243,20 +234,6 @@ BADGE,
         "# Regenerate Readme",
         "python3 scripts/gen_readme.py",
         "```",
-        "",
-        "## Rollback",
-        "",
-        "If a deploy introduces problems, reset an app repo to a known good commit and redeploy that app:",
-        "",
-        "```bash",
-        "cd /srv/apps/<AppName>",
-        "git fetch --all",
-        "git reset --hard <known_good_sha>",
-        "cd /srv/deploy",
-        "python3 deploy.py <AppName>",
-        "```",
-        "",
-        "Use `.deployed-versions.json` in this repo to find previously deployed SHAs.",
         "",
     ]
 

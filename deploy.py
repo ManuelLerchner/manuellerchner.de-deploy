@@ -50,6 +50,7 @@ def pi_build_command(app: dict) -> Optional[str]:
         "-p", shlex.quote(f"CPUQuota={limits['cpu_quota']}"),
         "-p", shlex.quote(f"MemoryHigh={limits['memory_high']}"),
         "-p", shlex.quote(f"MemoryMax={limits['memory_max']}"),
+        "-p", shlex.quote(f"MemorySwapMax={limits['memory_swap_max']}"),
         "nice", "-n", str(limits["nice"]),
         "ionice", "-c", str(limits["ionice_class"]), "-n", str(limits["ionice_level"]),
         "env", shlex.quote(f"NODE_OPTIONS=--max-old-space-size={limits['node_max_old_space_size']}"),
@@ -494,18 +495,16 @@ def main() -> None:
     config = yaml.safe_load(APPS_YAML.read_text())
     apps: list[dict] = config["apps"]
     extra_pm2_processes: list[str] = config.get("maintenance", {}).get("stop_pm2_processes", [])
+    command = sys.argv[1] if len(sys.argv) > 1 else ""
 
-    if len(sys.argv) > 1 and sys.argv[1] == "update":
-        cmd_update(apps)
-    elif len(sys.argv) > 1 and sys.argv[1] == "stop":
+    if command == "stop":
         cmd_stop(apps, extra_pm2_processes)
-    elif len(sys.argv) > 1 and sys.argv[1] == "build":
+    elif command == "build":
         cmd_build(apps)
-    elif len(sys.argv) > 1 and sys.argv[1] == "start":
+    elif command == "start":
         cmd_start(apps, extra_pm2_processes)
     else:
-        target = sys.argv[1] if len(sys.argv) > 1 else "all"
-        cmd_deploy(target, apps)
+        sys.exit("Usage: python3 deploy.py {stop|build|start}")
 
 
 if __name__ == "__main__":
