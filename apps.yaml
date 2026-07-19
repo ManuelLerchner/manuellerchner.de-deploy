@@ -187,7 +187,7 @@ apps:
     env_file: .env
     env_note: Public deployment configuration managed in apps.yaml; Ollama only.
     env:
-      IMAGE_TAG: latest
+      IMAGE_TAG: v0.8.2
       POSTGRES_USER: devops
       POSTGRES_PASSWORD: panic-public-postgres-password
       JWT_SECRET: panic-public-jwt-secret-change-before-public-use-0123456789abcdef
