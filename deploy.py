@@ -251,13 +251,22 @@ DEPLOY_FN = {
 
 # ── commands ──────────────────────────────────────────────────────────────────
 
+def select_apps(target: str, apps: list[dict]) -> list[dict]:
+    """Return all apps or exactly one named app."""
+    if target == "all":
+        return apps
+
+    selected = [app for app in apps if app["name"] == target]
+    if not selected:
+        available = ", ".join(app["name"] for app in apps)
+        sys.exit(f"App '{target}' not found. Available: {available}")
+    return selected
+
+
 def cmd_deploy(target: str, apps: list[dict]) -> None:
     require("git")
 
-    if target != "all" and not any(a["name"] == target for a in apps):
-        sys.exit(f"App '{target}' not found in apps.yaml")
-
-    selected = apps if target == "all" else [a for a in apps if a["name"] == target]
+    selected = select_apps(target, apps)
     if any(app.get("pi_build_limits") for app in selected):
         require("systemd-run", "ionice")
     if any(app["type"] == "service" for app in selected):
@@ -495,16 +504,25 @@ def main() -> None:
     config = yaml.safe_load(APPS_YAML.read_text())
     apps: list[dict] = config["apps"]
     extra_pm2_processes: list[str] = config.get("maintenance", {}).get("stop_pm2_processes", [])
-    command = sys.argv[1] if len(sys.argv) > 1 else ""
 
-    if command == "stop":
-        cmd_stop(apps, extra_pm2_processes)
+    command = sys.argv[1] if len(sys.argv) > 1 else ""
+    target = sys.argv[2] if len(sys.argv) > 2 else "all"
+
+    if len(sys.argv) > 3:
+        sys.exit("Usage: python3 deploy.py {deploy|stop|build|start} [all|APP_NAME]")
+
+    if command == "deploy":
+        cmd_deploy(target, apps)
+    elif command == "stop":
+        selected = select_apps(target, apps)
+        cmd_stop(selected, extra_pm2_processes if target == "all" else [])
     elif command == "build":
-        cmd_build(apps)
+        cmd_build(select_apps(target, apps))
     elif command == "start":
-        cmd_start(apps, extra_pm2_processes)
+        selected = select_apps(target, apps)
+        cmd_start(selected, extra_pm2_processes if target == "all" else [])
     else:
-        sys.exit("Usage: python3 deploy.py {stop|build|start}")
+        sys.exit("Usage: python3 deploy.py {deploy|stop|build|start} [all|APP_NAME]")
 
 
 if __name__ == "__main__":
