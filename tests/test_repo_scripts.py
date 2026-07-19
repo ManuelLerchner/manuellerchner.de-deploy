@@ -111,17 +111,82 @@ def test_start_uses_apps_yaml_order_then_extra_pm2_processes(monkeypatch) -> Non
     ]
 
 
-def test_legacy_deploy_targets_are_rejected(monkeypatch) -> None:
+def test_select_apps_returns_named_app() -> None:
     import deploy
 
-    monkeypatch.setattr(sys, "argv", ["deploy.py", "all"])
-    try:
-        deploy.main()
-    except SystemExit as exc:
-        assert str(exc) == "Usage: python3 deploy.py {stop|build|start}"
-    else:
-        raise AssertionError("legacy deploy target was accepted")
+    apps = [
+        {"name": "Static", "type": "static"},
+        {"name": "Stack", "type": "compose"},
+    ]
 
+    assert deploy.select_apps("Stack", apps) == [
+        {"name": "Stack", "type": "compose"},
+    ]
+
+
+def test_select_apps_returns_all_apps() -> None:
+    import deploy
+
+    apps = [
+        {"name": "Static", "type": "static"},
+        {"name": "Stack", "type": "compose"},
+    ]
+
+    assert deploy.select_apps("all", apps) == apps
+
+
+def test_select_apps_rejects_unknown_target() -> None:
+    import deploy
+    import pytest
+
+    apps = [
+        {"name": "Static", "type": "static"},
+        {"name": "Stack", "type": "compose"},
+    ]
+
+    with pytest.raises(
+        SystemExit,
+        match=r"App 'Missing' not found\. Available: Static, Stack",
+    ):
+        deploy.select_apps("Missing", apps)
+
+def test_main_deploys_individual_target(monkeypatch, tmp_path) -> None:
+    import deploy
+
+    config = tmp_path / "apps.yaml"
+    config.write_text(
+        """
+apps:
+  - name: Static
+    type: static
+  - name: Stack
+    type: compose
+maintenance:
+  stop_pm2_processes:
+    - n8n
+""",
+        encoding="utf-8",
+    )
+
+    called: list[tuple[str, list[str]]] = []
+
+    monkeypatch.setattr(deploy, "APPS_YAML", config)
+    monkeypatch.setattr(
+        deploy,
+        "cmd_deploy",
+        lambda target, apps: called.append(
+            (target, [app["name"] for app in apps]),
+        ),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["deploy.py", "deploy", "Stack"],
+    )
+
+    deploy.main()
+
+    assert called == [("Stack", ["Static", "Stack"])]
 
 def test_restaurant_post_deploy_succeeds_without_backup_database(tmp_path) -> None:
     import yaml
